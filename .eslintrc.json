@@ -1,3 +1,21 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:prettier/recommended",
+    "plugin:import/recommended"
+  ],
+  "plugins": ["import", "unused-imports"],
+  "rules": {
+    "sort-imports": ["warn", { "ignoreDeclarationSort": true }],
+    "import/order": [
+      "warn",
+      {
+        "alphabetize": {
+          "order": "asc",
+          "orderImportKind": "asc"
+        }
+      }
+    ],
+    "unused-imports/no-unused-imports": "warn"
+  }
 }
