@@ -1,3 +1,4 @@
+import { Box } from '@chakra-ui/react';
 import { Metadata } from 'next';
 import { fonts } from './fonts';
 import { Providers } from './providers';
@@ -14,7 +15,11 @@ export const RootLayout = ({
   return (
     <html lang='ja' className={fonts.notoSnasJp.variable}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Box width={'100vw'} height={'100vh'} overflow={'hidden'}>
+            {children}
+          </Box>
+        </Providers>
       </body>
     </html>
   );
