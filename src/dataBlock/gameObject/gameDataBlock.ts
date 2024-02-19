@@ -2,17 +2,21 @@ import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
 import { DataBlock, DataBlockId, packedDataBlock } from '@/dataBlock';
 
+export const dataBlockType = 'Game';
+
 export interface GameDataBlock extends DataBlock {
+  dataBlockType: typeof dataBlockType;
   sceneList: DataBlockId[];
   pack(self: GameDataBlock): Promise<PackedGameDataBlock>;
   unpack(data: any): Promise<GameDataBlock | undefined>;
 }
 
-const packedGameDataBlock = t.intersection([packedDataBlock, t.type({ sceneList: t.array(t.string) })]);
+const packedGameDataBlock = t.intersection([
+  packedDataBlock,
+  t.type({ dataBlockType: t.literal(dataBlockType), sceneList: t.array(t.string) }),
+]);
 
 export type PackedGameDataBlock = t.TypeOf<typeof packedGameDataBlock>;
-
-export const dataBlockType = 'Game';
 
 export const gameDataBlock = {
   is(data: any): data is GameDataBlock {

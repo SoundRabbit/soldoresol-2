@@ -21,7 +21,7 @@ import { openColor } from '@/util/openColor';
 
 export const Page = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const { dataBlockTable, add: addDataBlock } = useDataBlockTable();
+  const { isExist: isExistDataBlock, add: addDataBlock } = useDataBlockTable();
   const gameDataBlockId = useMemo(() => uuidv4(), []);
   const chatDataBlockId = useMemo(() => uuidv4(), []);
 
@@ -63,11 +63,11 @@ export const Page = () => {
   }, [chatDataBlockId]);
 
   useEffect(() => {
-    if (dataBlockTable[gameDataBlockId] === undefined) {
+    if (!isExistDataBlock(gameDataBlockId)) {
       const defaultGameDataBlock = gameDataBlock.new({ id: gameDataBlockId });
       addDataBlock(defaultGameDataBlock);
     }
-    if (dataBlockTable[chatDataBlockId] === undefined) {
+    if (!isExistDataBlock(chatDataBlockId)) {
       const defaultChatChannelDataBlocks = [
         chatChannelDataBlock.new({ name: '全体' }),
         chatChannelDataBlock.new({ name: 'GM' }),
@@ -104,7 +104,7 @@ export const Page = () => {
       addDataBlock(defualtChatMessageListDataBlock);
       addDataBlock(defaultChatDataBlock);
     }
-  }, [dataBlockTable, addDataBlock, gameDataBlockId, chatDataBlockId]);
+  }, [isExistDataBlock, addDataBlock, gameDataBlockId, chatDataBlockId]);
 
   return (
     <Flex direction={'column'} width={'100%'} height={'100%'}>

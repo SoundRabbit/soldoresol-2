@@ -1,12 +1,12 @@
-import { Input as ChakraInput, InputProps as ChakraInputProps } from '@chakra-ui/react';
+import { Textarea as ChakraTextarea, TextareaProps as ChakraTextareaProps } from '@chakra-ui/react';
 import React from 'react';
 import { openColor } from '@/util/openColor';
 
-export type InputProps = ChakraInputProps;
+export type TextareaProps = ChakraTextareaProps;
 
-export const Input: React.FC<InputProps> = ({ ...props }) => {
+export const Textarea: React.FC<TextareaProps> = ({ ...props }) => {
   return (
-    <ChakraInput
+    <ChakraTextarea
       variant={'unstyled'}
       paddingX={'1ch'}
       paddingY={'0.2em'}
@@ -14,6 +14,7 @@ export const Input: React.FC<InputProps> = ({ ...props }) => {
       backgroundColor={'#fff'}
       color={openColor.gray[9].hex()}
       _disabled={{ backgroundColor: openColor.gray[1].hex() }}
+      resize={'none'}
       {...props}
     />
   );

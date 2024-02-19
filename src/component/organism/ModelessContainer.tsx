@@ -79,6 +79,8 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
         const newModelessList = [...modelessList];
         const newZIndex = getMaxZIndex(modelessControllerRef.current) + 1;
         const position = option?.defaultPosition || { x: 160, y: 160 };
+        position.x += (newZIndex % 10) * 20;
+        position.y += (newZIndex % 10) * 20;
         newModelessList.push({ modelessId: newModelessId, defaultZIndex: newZIndex, defaultPosition: position });
         return newModelessList;
       });
@@ -128,8 +130,8 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
         }
         if (srcTab) {
           const defaultPosition = {
-            x: e.clientX - containerRectRef.current.x,
-            y: e.clientY - containerRectRef.current.y,
+            x: e.clientX - containerRectRef.current.x - 32,
+            y: e.clientY - containerRectRef.current.y - 16,
           };
           handleOpenMoodeless([srcTab], { defaultPosition });
         }

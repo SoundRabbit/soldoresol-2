@@ -1,24 +1,48 @@
 import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
+import { DataBlockId } from '@/dataBlock';
+import { useSetState } from '@/hook/useSetState';
 
-export const useChatModelessTab = (tabId: string) => {
-  const swrKeyBase = `local/modelessTab/${tabId}`;
+const SWR_KEY = 'local/modelessTab';
 
-  const { data: maybeSelectedChannelIndex, mutate: mutateSelectedChannelIndex } = useSWR<number>(
-    `${swrKeyBase}/selectedChannelIndex`,
-    null,
-  );
+export const useSelectedChannelIndex = (tabId: string) => {
+  const swrKey = [SWR_KEY, tabId, 'selectedChannelIndex'];
+
+  const { data: maybeSelectedChannelIndex, mutate: mutateSelectedChannelIndex } = useSWR<number>(swrKey, null);
   const selectedChannelIndex = useMemo(() => maybeSelectedChannelIndex ?? 0, [maybeSelectedChannelIndex]);
 
-  const setSelectedChannelIndex = useCallback(
-    (index: number) => {
-      mutateSelectedChannelIndex(index, { revalidate: false });
+  const setSelectedChannelIndexWithCallback = useCallback(
+    (callback: (prevIndex: number) => number) => {
+      mutateSelectedChannelIndex((prevIndex) => callback(prevIndex ?? 0), { revalidate: false });
     },
     [mutateSelectedChannelIndex],
   );
 
-  return {
-    selectedChannelIndex,
-    setSelectedChannelIndex,
-  };
+  const setSelectedChannelIndex = useSetState(setSelectedChannelIndexWithCallback);
+
+  return { selectedChannelIndex, setSelectedChannelIndex };
+};
+
+export const useSelectedTargetChannelIdList = (tabId: string) => {
+  const swrKey = [SWR_KEY, tabId, 'selectedTargetChannelList'];
+
+  const { data: maybeSelectedTargetChannelIdList, mutate: mutateSelectedTargetChannelIdList } = useSWR<DataBlockId[]>(
+    swrKey,
+    null,
+  );
+  const selectedTargetChannelIdList = useMemo(
+    () => maybeSelectedTargetChannelIdList ?? [],
+    [maybeSelectedTargetChannelIdList],
+  );
+
+  const setSelectedTargetChannelIdListWithCallback = useCallback(
+    (callback: (prevList: DataBlockId[]) => DataBlockId[]) => {
+      mutateSelectedTargetChannelIdList((prevList) => callback(prevList ?? []), { revalidate: false });
+    },
+    [mutateSelectedTargetChannelIdList],
+  );
+
+  const setSelectedTargetChannelIdList = useSetState(setSelectedTargetChannelIdListWithCallback);
+
+  return { selectedTargetChannelIdList, setSelectedTargetChannelIdList };
 };

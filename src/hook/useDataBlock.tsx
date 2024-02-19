@@ -1,121 +1,121 @@
-import { useCallback, useMemo } from 'react';
-import useSWR from 'swr';
+import { useCallback, useContext, useEffect, useMemo } from 'react';
+import useSWR, { useSWRConfig } from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { v4 as uuidv4 } from 'uuid';
+import { DataBlockTableContext } from '@/context/DataBlock';
 import { DataBlock, DataBlockId } from '@/dataBlock';
 
-export interface AnnotDataBlock extends DataBlock {
-  updateTimestamp: number;
-  isAvailable: boolean;
-}
+const SWR_KEY = 'local/dataBlock';
 
-export type DataBlockTable = {
-  [id: DataBlockId]: AnnotDataBlock | undefined;
-};
+const dataBlockSwrKey = (id: DataBlockId | undefined) => [SWR_KEY, id];
 
 export const useDataBlockTable = () => {
-  const swrKey = 'local/dataBlock/table';
+  const dataBlockTableRef = useContext(DataBlockTableContext);
 
-  const { data: maybeDataBlockTable, mutate } = useSWR<DataBlockTable>(swrKey, null);
+  const { mutate } = useSWRConfig();
 
-  const dataBlockTable = useMemo(() => {
-    if (maybeDataBlockTable) {
-      return maybeDataBlockTable;
-    } else {
-      return {};
-    }
-  }, [maybeDataBlockTable]);
+  const isExist = useCallback(
+    (id?: DataBlockId) => {
+      if (!dataBlockTableRef || !id) return false;
+
+      return dataBlockTableRef.current[id] !== undefined;
+    },
+    [dataBlockTableRef],
+  );
 
   const add = useCallback(
     (dataBlock: DataBlock) => {
-      mutate(
-        (dataBlockTable) => {
-          if (!dataBlockTable) return {};
-          const updateTimestamp = Date.now();
-          const annotDataBlock = (() => {
-            const insertPosition = dataBlockTable[dataBlock.id];
-            if (!!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp) {
-              const newId = uuidv4();
-              return { ...dataBlock, id: newId, updateTimestamp, isAvailable: true };
-            } else {
-              return { ...dataBlock, updateTimestamp, isAvailable: true };
-            }
-          })();
-          return { ...dataBlockTable, [dataBlock.id]: annotDataBlock };
-        },
-        { revalidate: false },
-      );
+      if (!dataBlockTableRef) return;
+
+      const updateTimestamp = Date.now();
+      const annotDataBlock = (() => {
+        const insertPosition = dataBlockTableRef.current[dataBlock.id];
+        if (!!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp) {
+          const newId = uuidv4();
+          return { ...dataBlock, id: newId, updateTimestamp, isAvailable: true };
+        } else {
+          return { ...dataBlock, updateTimestamp, isAvailable: true };
+        }
+      })();
+      dataBlockTableRef.current[annotDataBlock.id] = annotDataBlock;
+
+      mutate([SWR_KEY, annotDataBlock.id]);
+
+      return annotDataBlock.id;
     },
-    [mutate],
+    [dataBlockTableRef, mutate],
   );
 
   const remove = useCallback(
     (id: DataBlockId) => {
-      mutate(
-        (dataBlockTable) => {
-          if (!dataBlockTable) return {};
+      if (!dataBlockTableRef) return;
 
-          const annotDataBlock = dataBlockTable[id];
-          const updateTimestamp = Date.now();
+      const annotDataBlock = dataBlockTableRef.current[id];
+      const updateTimestamp = Date.now();
 
-          if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
+      if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
 
-          annotDataBlock.isAvailable = false;
-          annotDataBlock.updateTimestamp = updateTimestamp;
+      const newAnnotDataBlock = { ...annotDataBlock, isAvailable: false, updateTimestamp };
 
-          return { ...dataBlockTable, [id]: { ...annotDataBlock } };
-        },
-        { revalidate: false },
-      );
+      dataBlockTableRef.current[id] = newAnnotDataBlock;
+      mutate([SWR_KEY, id]);
+
+      return newAnnotDataBlock.id;
     },
-    [mutate],
+    [dataBlockTableRef, mutate],
   );
 
   const update = useCallback(
     async (id: DataBlockId, updateCallback: (dataBlock: DataBlock) => Promise<DataBlock>) => {
-      mutate(
-        async (dataBlockTable) => {
-          if (!dataBlockTable) return {};
+      if (!dataBlockTableRef) return;
 
-          const annotDataBlock = dataBlockTable[id];
-          const updateTimestamp = Date.now();
+      const annotDataBlock = dataBlockTableRef.current[id];
+      const updateTimestamp = Date.now();
 
-          if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
+      if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
 
-          const isAvailable = annotDataBlock.isAvailable;
-          const newDataBlock = await updateCallback(annotDataBlock);
-          const newAnnotDataBlock = { ...newDataBlock, updateTimestamp, isAvailable };
+      const isAvailable = annotDataBlock.isAvailable;
+      const newDataBlock = await updateCallback(annotDataBlock);
+      const newAnnotDataBlock = { ...newDataBlock, updateTimestamp, isAvailable };
 
-          return { ...dataBlockTable, [id]: newAnnotDataBlock };
-        },
-        { revalidate: false },
-      );
+      dataBlockTableRef.current[id] = newAnnotDataBlock;
+      mutate([SWR_KEY, id]);
+
+      return newAnnotDataBlock.id;
     },
-    [mutate],
+    [dataBlockTableRef, mutate],
   );
 
-  const returnValue = useMemo(
+  return useMemo(
     () => ({
-      dataBlockTable,
+      isExist,
       add,
       remove,
       update,
     }),
-    [dataBlockTable, add, remove, update],
+    [isExist, add, remove, update],
   );
-
-  return returnValue;
 };
 
 export const useDataBlock = <T extends DataBlock>(
   id: DataBlockId | undefined,
   typeChecker: (data: DataBlock) => data is T,
 ) => {
-  const { dataBlockTable, update } = useDataBlockTable();
+  const dataBlockTableRef = useContext(DataBlockTableContext);
 
-  const dataBlock = useMemo(() => (id ? dataBlockTable[id] : undefined), [dataBlockTable, id]);
+  const dataBlockFetcher = useCallback(async () => {
+    if (!dataBlockTableRef || !id) return;
+
+    return dataBlockTableRef.current[id];
+  }, [dataBlockTableRef, id]);
+
+  const { update } = useDataBlockTable();
+  const { data } = useSWR(dataBlockSwrKey(id), dataBlockFetcher);
+
   const bindedUpdate = useCallback(
     async (updateCallback: (dataBlock: T) => Promise<T>) => {
       if (!id) return;
+
       await update(id, async (dataBlock) => {
         if (typeChecker(dataBlock)) {
           return await updateCallback(dataBlock);
@@ -127,13 +127,54 @@ export const useDataBlock = <T extends DataBlock>(
     [id, update, typeChecker],
   );
 
-  const returnValue = useMemo(
+  return useMemo(
     () => ({
-      dataBlock: !!dataBlock && typeChecker(dataBlock) ? (dataBlock as T) : undefined,
+      dataBlock: !!data && typeChecker(data) ? data : undefined,
       update: bindedUpdate,
     }),
-    [dataBlock, bindedUpdate, typeChecker],
+    [data, bindedUpdate, typeChecker],
+  );
+};
+
+export const useDataBlockList = <T extends DataBlock>(
+  idList: DataBlockId[],
+  typeChecker: (data: DataBlock) => data is T,
+) => {
+  const dataBlockTableRef = useContext(DataBlockTableContext);
+
+  const swrKey = useCallback(
+    (index: number) => {
+      return dataBlockSwrKey(idList.at(index));
+    },
+    [idList],
   );
 
-  return returnValue;
+  const dataBlockFetcher = useCallback(
+    async ([_, id]: (string | undefined)[]) => {
+      if (!id) return;
+      if (!dataBlockTableRef) return;
+
+      return dataBlockTableRef.current[id];
+    },
+    [dataBlockTableRef],
+  );
+
+  const { data, setSize } = useSWRInfinite(swrKey, dataBlockFetcher, {
+    initialSize: idList.length,
+  });
+
+  const filteredData = useMemo(() => {
+    return data?.filter((data) => !!data && typeChecker(data));
+  }, [data, typeChecker]);
+
+  useEffect(() => {
+    setSize(idList.length);
+  }, [idList, setSize]);
+
+  return useMemo(
+    () => ({
+      dataBlockList: filteredData,
+    }),
+    [filteredData],
+  );
 };

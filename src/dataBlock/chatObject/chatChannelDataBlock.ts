@@ -2,7 +2,10 @@ import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
 import { DataBlock, packedDataBlock } from '@/dataBlock';
 
+export const dataBlockType = 'ChatChannel';
+
 export interface ChatChannelDataBlock extends DataBlock {
+  dataBlockType: typeof dataBlockType;
   name: string;
   pack(self: ChatChannelDataBlock): Promise<PackedChatChannelDataBlock>;
   unpack(data: any): Promise<ChatChannelDataBlock | undefined>;
@@ -11,13 +14,12 @@ export interface ChatChannelDataBlock extends DataBlock {
 export const packedChatChannelDataBlock = t.intersection([
   packedDataBlock,
   t.type({
+    dataBlockType: t.literal(dataBlockType),
     name: t.string,
   }),
 ]);
 
 export type PackedChatChannelDataBlock = t.TypeOf<typeof packedChatChannelDataBlock>;
-
-export const dataBlockType = 'ChatChannel';
 
 export const chatChannelDataBlock = {
   is(data: any): data is ChatChannelDataBlock {

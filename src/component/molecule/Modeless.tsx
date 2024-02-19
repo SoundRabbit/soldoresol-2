@@ -12,11 +12,12 @@ import {
   MenuList,
   Text,
 } from '@chakra-ui/react';
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { RndDragCallback, RndResizeCallback } from 'react-rnd';
 import { Rnd } from 'react-rnd';
 import { OnMoveTab, parseDataTransfer } from '@/component/atom/ModelessTab';
-import { MouseLeftButton } from '@/component/atom/icon/MouseLeftButton';
+import { CheckBoxIcon } from '@/component/atom/icon/CheckBoxIcon';
+import { MouseLeftButtonIcon } from '@/component/atom/icon/MouseLeftButtonIcon';
 import { openColor } from '@/util/openColor';
 
 export type ModelessTabProps = {
@@ -80,6 +81,8 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
     },
     ref,
   ) => {
+    const onCloseMenuRef = useRef<() => void>(() => {});
+
     const [zIndex, setZIndexImpl] = useState(defaultZIndex);
     const zIndexRef = useRef(zIndex);
     const setZIndex = useCallback((zIndex: number | ((prev: number) => number)) => {
@@ -90,6 +93,16 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
       }
       setZIndexImpl(zIndexRef.current);
     }, []);
+
+    const [isSnapToGrid, setIsSnapToGrid] = useState(false);
+    const snapGridSize = useMemo<[number, number]>(
+      () => [containerRect.width / 100, containerRect.height / 100],
+      [containerRect],
+    );
+    const snapGrid = useMemo<[number, number]>(
+      () => (isSnapToGrid ? snapGridSize : [1, 1]),
+      [isSnapToGrid, snapGridSize],
+    );
 
     const [curentModelessPosition, setModelessPosition] = useState(defaultPosition);
     const [curentModelessSize, setModelessSize] = useState({ width: 640, height: 480 });
@@ -188,11 +201,16 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
     const handleCloseSelfByMenu = useCallback(
       (e: React.MouseEvent) => {
         if (e.shiftKey) {
+          onCloseMenuRef.current();
           onCloseModeless(modelessId);
         }
       },
       [onCloseModeless, modelessId],
     );
+
+    const handleToggleSnapToGrid = useCallback(() => {
+      setIsSnapToGrid((isSnapToGrid) => !isSnapToGrid);
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -244,10 +262,13 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
               return newTabList;
             });
           },
-          pushTabList: (tabList: ModelessTab[]) => {
-            if (tabList.length === 0) return;
+          pushTabList: (pushTabList: ModelessTab[]) => {
+            if (pushTabList.length === 0) return;
+            if (tabListRef.current.length === 0) {
+              setSelectedTabId(pushTabList[0].tabId);
+            }
             setTabList((prevTabList) => {
-              const newTabList = [...prevTabList, ...tabList];
+              const newTabList = [...prevTabList, ...pushTabList];
               return newTabList;
             });
           },
@@ -261,6 +282,23 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
       }),
       [modelessId, onCloseModeless, setZIndex, setTabList],
     );
+
+    useEffect(() => {
+      if (isSnapToGrid) {
+        setModelessPosition((position) => {
+          return {
+            x: Math.round(position.x / snapGridSize[0]) * snapGridSize[0],
+            y: Math.round(position.y / snapGridSize[1]) * snapGridSize[1],
+          };
+        });
+        setModelessSize((size) => {
+          return {
+            width: Math.round(size.width / snapGridSize[0]) * snapGridSize[0],
+            height: Math.round(size.height / snapGridSize[1]) * snapGridSize[1],
+          };
+        });
+      }
+    }, [isSnapToGrid, snapGridSize]);
 
     return (
       <Rnd
@@ -284,6 +322,8 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
           topRight: { cursor: 'nesw-resize' },
         }}
         resizeHandleComponent={{}}
+        dragGrid={snapGrid}
+        resizeGrid={snapGrid}
         style={{ zIndex: zIndex }}
       >
         <Flex
@@ -321,36 +361,56 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
               )}
             </Grid>
             <Menu>
-              <MenuButton
-                as={IconButton}
-                variant='unstyled'
-                icon={<HamburgerIcon color={openColor.gray[0].hex()} />}
-                height={'2.5rem'}
-                data-element-type={'menu-button'}
-              />
-              <MenuList position={'absolute'} right={'-2.5rem'} fontSize={'0.8rem'} paddingY={'0.5em'}>
-                <MenuGroup title={'ウィンドウ'} marginTop={'0.5em'} marginBottom={'0'}>
-                  <MenuItem onClick={handleCloseSelectedTab} paddingY={'0.5em'}>
-                    タブを閉じる
-                  </MenuItem>
-                  <Flex
-                    as={MenuItem}
-                    onClick={handleCloseSelfByMenu}
-                    paddingY={'0.5em'}
-                    justifyContent={'space-between'}
-                  >
-                    <Text>ウィンドウを閉じる </Text>
-                    <Flex alignItems={'center'}>
-                      <Text>Shift+</Text>
-                      <MouseLeftButton />
-                    </Flex>
-                  </Flex>
-                </MenuGroup>
-                {selectedTab?.renderMenu({
-                  modelessId,
-                  tabId: selectedTabId,
-                })}
-              </MenuList>
+              {({ onClose }) => {
+                onCloseMenuRef.current = onClose;
+                return (
+                  <>
+                    <MenuButton
+                      as={IconButton}
+                      variant='unstyled'
+                      icon={<HamburgerIcon color={openColor.gray[0].hex()} />}
+                      height={'2.5rem'}
+                      data-element-type={'menu-button'}
+                    />
+                    <MenuList position={'absolute'} right={'-2.5rem'} fontSize={'0.8rem'} paddingY={'0.5em'}>
+                      <MenuGroup title={'ウィンドウ / タブ'} marginTop={'0.5em'} marginBottom={'0'}>
+                        <Flex
+                          as={MenuItem}
+                          closeOnSelect={false}
+                          onClick={handleToggleSnapToGrid}
+                          paddingY={'0.5em'}
+                          justifyContent={'space-between'}
+                        >
+                          <Text>グリッドにスナップ</Text>
+                          {isSnapToGrid && (
+                            <CheckBoxIcon color={openColor.gray[0].hex()} backgroundColor={openColor.blue[9].hex()} />
+                          )}
+                        </Flex>
+                        <MenuItem onClick={handleCloseSelectedTab} paddingY={'0.5em'}>
+                          タブを閉じる
+                        </MenuItem>
+                        <Flex
+                          as={MenuItem}
+                          closeOnSelect={false}
+                          onClick={handleCloseSelfByMenu}
+                          paddingY={'0.5em'}
+                          justifyContent={'space-between'}
+                        >
+                          <Text>ウィンドウを閉じる </Text>
+                          <Flex alignItems={'center'}>
+                            <Text>Shift+</Text>
+                            <MouseLeftButtonIcon />
+                          </Flex>
+                        </Flex>
+                      </MenuGroup>
+                      {selectedTab?.renderMenu({
+                        modelessId,
+                        tabId: selectedTabId,
+                      })}
+                    </MenuList>
+                  </>
+                );
+              }}
             </Menu>
           </Flex>
           <Box flexGrow={1} overflow={'hidden'} backgroundColor={openColor.gray[0].hex()}>
