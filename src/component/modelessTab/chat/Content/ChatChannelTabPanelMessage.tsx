@@ -1,15 +1,15 @@
 import React from 'react';
-import { ChatMessage } from '@/component/atom/ChatMessage';
+import { ChatMessage } from '@/component/common/ChatMessage';
 import { DataBlockId } from '@/dataBlock';
 import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 
-export type ChatChannelPanelMessageProps = {
+export type ChatChannelTabPanelMessageProps = {
   chatMessageDataBlocklId: DataBlockId;
   chatChannelDataBlocklId: DataBlockId;
 };
 
-export const ChatChannelPanelMessage: React.FC<ChatChannelPanelMessageProps> = ({
+export const ChatChannelTabPanelMessage: React.FC<ChatChannelTabPanelMessageProps> = ({
   chatMessageDataBlocklId,
   chatChannelDataBlocklId,
 }) => {

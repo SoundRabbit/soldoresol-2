@@ -14,7 +14,7 @@ export const CheckBoxIcon: React.FC<CheckBoxIconProps> = ({ isChecked, isOutline
   return (
     <Icon viewBox='0 0 512 512' {...props}>
       <rect
-        stroke-width='32'
+        strokeWidth='32'
         x='16'
         y='16'
         width='480'

@@ -7,6 +7,7 @@ export const dataBlockType = 'ChatChannel';
 export interface ChatChannelDataBlock extends DataBlock {
   dataBlockType: typeof dataBlockType;
   name: string;
+  description: string;
   pack(self: this): Promise<PackedChatChannelDataBlock>;
 }
 
@@ -14,6 +15,7 @@ export const PackedChatChannelDataBlock = t.intersection([
   PackedDataBlock,
   t.type({
     dataBlockType: t.literal(dataBlockType),
+    description: t.string,
     name: t.string,
   }),
 ]);
@@ -27,13 +29,15 @@ export const ChatChannelDataBlock = {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  create(props: Partial<ChatChannelDataBlock>): ChatChannelDataBlock {
-    const id = props.id ?? uuidv4();
-    const name = props.name ?? '';
+  create(props?: Partial<ChatChannelDataBlock>): ChatChannelDataBlock {
+    const id = props?.id ?? uuidv4();
+    const name = props?.name ?? '';
+    const description = props?.description ?? '';
     return {
       id,
       dataBlockType,
       name,
+      description,
       pack: ChatChannelDataBlock.pack,
       unpack: ChatChannelDataBlock.unpack,
     };
@@ -44,6 +48,7 @@ export const ChatChannelDataBlock = {
       id: self.id,
       dataBlockType,
       name: self.name,
+      description: self.description,
     }))();
   },
 
@@ -54,6 +59,7 @@ export const ChatChannelDataBlock = {
         id: data.id,
         dataBlockType: data.dataBlockType,
         name: data.name,
+        description: data.description,
         pack: ChatChannelDataBlock.pack,
         unpack: ChatChannelDataBlock.unpack,
       };

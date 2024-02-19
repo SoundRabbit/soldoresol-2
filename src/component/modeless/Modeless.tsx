@@ -1,23 +1,15 @@
 import { HamburgerIcon } from '@chakra-ui/icons';
-import {
-  Box,
-  Flex,
-  FlexProps,
-  Grid,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuGroup,
-  MenuItem,
-  MenuList,
-  Text,
-} from '@chakra-ui/react';
+import { Box, Flex, FlexProps, Grid, IconButton, Menu, MenuButton, MenuList } from '@chakra-ui/react';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { RndDragCallback, RndResizeCallback } from 'react-rnd';
-import { Rnd } from 'react-rnd';
-import { OnMoveTab, parseDataTransfer } from '@/component/atom/ModelessTab';
-import { CheckBoxIcon } from '@/component/atom/icon/CheckBoxIcon';
-import { MouseLeftButtonIcon } from '@/component/atom/icon/MouseLeftButtonIcon';
+import { ModelessMenuItems } from './Modeless/ModelessMenuItems';
+import {
+  ModelessRnd,
+  ModelessRndController,
+  ModelessRndProps,
+  defaultModelessRndController,
+} from './Modeless/ModelessRnd';
+import { OnMoveTab, parseDataTransfer } from './ModelessTab';
+import { useRefState } from '@/hook/useRefState';
 import { bgColor, txColor } from '@/util/openColor';
 
 export type ModelessTabProps = {
@@ -61,7 +53,7 @@ export type ModelessProps = FlexProps & {
   modelessId: string;
   defaultPosition: { x: number; y: number };
   defaultZIndex: number;
-  containerRect: { x: number; y: number; width: number; height: number };
+  containerRect: ModelessRndProps['containerRect'];
   onMoveTab: OnMoveTab;
   onFocusModeless: (modelessId: string) => void;
   onCloseModeless: (modelessId: string) => void;
@@ -81,77 +73,31 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
     },
     ref,
   ) => {
+    const modelessRndControllerRef = useRef<ModelessRndController>(defaultModelessRndController);
     const onCloseMenuRef = useRef<() => void>(() => {});
 
-    const [zIndex, setZIndexImpl] = useState(defaultZIndex);
-    const zIndexRef = useRef(zIndex);
-    const setZIndex = useCallback((zIndex: number | ((prev: number) => number)) => {
-      if (typeof zIndex === 'function') {
-        zIndexRef.current = zIndex(zIndexRef.current);
-      } else {
-        zIndexRef.current = zIndex;
-      }
-      setZIndexImpl(zIndexRef.current);
-    }, []);
+    const [isSnapToGrid, setIsSnapToGrid] = useState<boolean>(false);
 
-    const [isSnapToGrid, setIsSnapToGrid] = useState(false);
-    const snapGridSize = useMemo<[number, number]>(
-      () => [containerRect.width / 100, containerRect.height / 100],
-      [containerRect],
-    );
-    const snapGrid = useMemo<[number, number]>(
-      () => (isSnapToGrid ? snapGridSize : [1, 1]),
-      [isSnapToGrid, snapGridSize],
-    );
-
-    const [curentModelessPosition, setModelessPosition] = useState(defaultPosition);
-    const [curentModelessSize, setModelessSize] = useState({ width: 640, height: 480 });
-    const [modelessPosition, modelessSize] = useMemo(() => {
-      const modelessPosition = curentModelessPosition;
-      const modelessSize = curentModelessSize;
-      if (modelessSize.width > containerRect.width) {
-        modelessSize.width = containerRect.width;
-      }
-      if (modelessSize.height > containerRect.height) {
-        modelessSize.height = containerRect.height;
-      }
-      if (modelessPosition.x + modelessSize.width > containerRect.x + containerRect.width) {
-        modelessPosition.x = containerRect.x + containerRect.width - modelessSize.width;
-      }
-      if (modelessPosition.y + modelessSize.height > containerRect.y + containerRect.height) {
-        modelessPosition.y = containerRect.y + containerRect.height - modelessSize.height;
-      }
-      return [modelessPosition, modelessSize];
-    }, [curentModelessPosition, curentModelessSize, containerRect]);
-
-    const [tabList, setTabListImpl] = useState<ModelessTab[]>([]);
-    const tabListRef = useRef<ModelessTab[]>(tabList);
-    const setTabList = useCallback((tabList: ModelessTab[] | ((prev: ModelessTab[]) => ModelessTab[])) => {
-      if (typeof tabList === 'function') {
-        tabListRef.current = tabList(tabListRef.current);
-      } else {
-        tabListRef.current = tabList;
-      }
-      setTabListImpl(tabListRef.current);
-    }, []);
+    const [tabList, tabListRef, setTabList] = useRefState<ModelessTab[]>([]);
 
     const [selectedTabId, setSelectedTabId] = useState<string>('');
     const selectedTab = useMemo(() => tabList.find((tab) => tab.tabId === selectedTabId), [tabList, selectedTabId]);
 
-    const handleMoveModeless = useCallback<RndDragCallback>((_e, position) => {
-      setModelessPosition(position);
-    }, []);
+    const tabListLength = useMemo(() => tabList.length, [tabList]);
 
-    const handleResizeModeless = useCallback<RndResizeCallback>((_e, _direction, ref, _delta, position) => {
-      setModelessSize({ width: ref.offsetWidth, height: ref.offsetHeight });
-      setModelessPosition(position);
+    const handleToggleSnapToGrid = useCallback(() => {
+      setIsSnapToGrid((prev) => {
+        return !prev;
+      });
     }, []);
+    useEffect(() => {
+      modelessRndControllerRef.current.setIsSnapToGrid(isSnapToGrid);
+    }, [isSnapToGrid]);
 
     const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
     }, []);
 
-    const tabListLength = useMemo(() => tabList.length, [tabList]);
     const handleDrop = useCallback(
       (e: React.DragEvent<HTMLDivElement>) => {
         const srcDataTransfer = parseDataTransfer(e);
@@ -208,10 +154,6 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
       [onCloseModeless, modelessId],
     );
 
-    const handleToggleSnapToGrid = useCallback(() => {
-      setIsSnapToGrid((isSnapToGrid) => !isSnapToGrid);
-    }, []);
-
     useImperativeHandle(
       ref,
       () => ({
@@ -253,7 +195,6 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
 
               const srcTab = tabList[srcTabIndex];
               const newTabList = tabList.filter((tab) => tab.tabId !== srcTabId);
-              console.log(srcTabIndex, dstTabIndex);
               if (dstTabIndex === srcTabIndex) {
                 newTabList.splice(dstTabIndex - 1, 0, srcTab);
               } else {
@@ -273,60 +214,25 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
             });
           },
           getZIndex: () => {
-            return zIndexRef.current;
+            return modelessRndControllerRef.current.getZIndex();
           },
           setZIndex: (zIndex: number) => {
-            setZIndex(zIndex);
+            modelessRndControllerRef.current.setZIndex(zIndex);
           },
         },
       }),
-      [modelessId, onCloseModeless, setZIndex, setTabList],
+      [modelessId, onCloseModeless, setTabList, tabListRef],
     );
 
-    useEffect(() => {
-      if (isSnapToGrid) {
-        setModelessPosition((position) => {
-          return {
-            x: Math.round(position.x / snapGridSize[0]) * snapGridSize[0],
-            y: Math.round(position.y / snapGridSize[1]) * snapGridSize[1],
-          };
-        });
-        setModelessSize((size) => {
-          return {
-            width: Math.round(size.width / snapGridSize[0]) * snapGridSize[0],
-            height: Math.round(size.height / snapGridSize[1]) * snapGridSize[1],
-          };
-        });
-      }
-    }, [isSnapToGrid, snapGridSize]);
-
     return (
-      <Rnd
-        onDragStop={handleMoveModeless}
-        onResize={handleResizeModeless}
-        onMouseDownCapture={handleFocusSelf}
-        position={modelessPosition}
-        size={modelessSize}
-        minWidth={240}
-        minHeight={320}
-        bounds={'parent'}
-        dragHandleClassName={'rnd-drag-handle'}
-        resizeHandleStyles={{
-          bottom: { cursor: 'ns-resize' },
-          bottomLeft: { cursor: 'nesw-resize' },
-          bottomRight: { cursor: 'nwse-resize' },
-          left: { cursor: 'ew-resize' },
-          right: { cursor: 'ew-resize' },
-          top: { cursor: 'ns-resize' },
-          topLeft: { cursor: 'nwse-resize' },
-          topRight: { cursor: 'nesw-resize' },
-        }}
-        resizeHandleComponent={{}}
-        dragGrid={snapGrid}
-        resizeGrid={snapGrid}
-        style={{ zIndex: zIndex }}
+      <ModelessRnd
+        ref={modelessRndControllerRef}
+        defaultZIndex={defaultZIndex}
+        defaultPosition={defaultPosition}
+        containerRect={containerRect}
       >
         <Flex
+          onMouseDownCapture={handleFocusSelf}
           flexDirection={'column'}
           width={'100%'}
           height={'100%'}
@@ -335,10 +241,11 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
         >
           <Flex
             className={'rnd-drag-handle'}
-            paddingLeft={'0.5ch'}
-            backgroundColor={bgColor.gray[4].hex()}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
+            overflow={'visible'}
+            paddingLeft={'0.5ch'}
+            backgroundColor={bgColor.gray[4].hex()}
           >
             <Grid
               paddingRight={'4ch'}
@@ -373,36 +280,14 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
                       data-element-type={'menu-button'}
                     />
                     <MenuList position={'absolute'} right={'-2.5rem'} fontSize={'0.8rem'} paddingY={'0.5em'}>
-                      <MenuGroup title={'ウィンドウ / タブ'} marginTop={'0.5em'} marginBottom={'0'}>
-                        <Flex
-                          as={MenuItem}
-                          closeOnSelect={false}
-                          onClick={handleToggleSnapToGrid}
-                          paddingY={'0.5em'}
-                          justifyContent={'space-between'}
-                        >
-                          <Text>グリッドにスナップ</Text>
-                          {isSnapToGrid && (
-                            <CheckBoxIcon color={txColor.gray[0].hex()} backgroundColor={bgColor.blue[4].hex()} />
-                          )}
-                        </Flex>
-                        <MenuItem onClick={handleCloseSelectedTab} paddingY={'0.5em'}>
-                          タブを閉じる
-                        </MenuItem>
-                        <Flex
-                          as={MenuItem}
-                          closeOnSelect={false}
-                          onClick={handleCloseSelfByMenu}
-                          paddingY={'0.5em'}
-                          justifyContent={'space-between'}
-                        >
-                          <Text>ウィンドウを閉じる </Text>
-                          <Flex alignItems={'center'}>
-                            <Text>Shift+</Text>
-                            <MouseLeftButtonIcon />
-                          </Flex>
-                        </Flex>
-                      </MenuGroup>
+                      <ModelessMenuItems
+                        isSnapToGrid={isSnapToGrid}
+                        onCloseTab={handleCloseSelectedTab}
+                        onCloseModeless={handleCloseSelfByMenu}
+                        onToggleSnapToGrid={handleToggleSnapToGrid}
+                        marginTop={'0.5em'}
+                        marginBottom={'0'}
+                      />
                       {selectedTab?.renderMenu({
                         modelessId,
                         tabId: selectedTabId,
@@ -417,7 +302,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
             {selectedTab?.renderContent({ modelessId, tabId: selectedTabId })}
           </Box>
         </Flex>
-      </Rnd>
+      </ModelessRnd>
     );
   },
 );

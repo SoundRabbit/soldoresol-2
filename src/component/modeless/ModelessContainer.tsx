@@ -1,8 +1,8 @@
 import { Box } from '@chakra-ui/react';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { parseDataTransfer } from '@/component/atom/ModelessTab';
-import { Modeless, ModelessController, ModelessTab } from '@/component/molecule/Modeless';
+import { Modeless, ModelessController, ModelessTab } from './Modeless';
+import { parseDataTransfer } from './ModelessTab';
 
 export type ModelessContainerController = {
   openModeless: (tabList: ModelessTab[], option?: { defaultPosition?: { x: number; y: number } }) => void;

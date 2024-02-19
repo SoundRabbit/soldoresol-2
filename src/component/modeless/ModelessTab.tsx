@@ -102,8 +102,8 @@ export const ModelessTab: React.FC<ModelessTabProps> = ({
       paddingTop={'0.4em'}
       paddingBottom={'0.6em'}
       borderRadius={'0.5em 0.5em 0 0'}
-      backgroundColor={isSelected ? bgColor.blue[4].hex() : bgColor.gray[0].hex()}
-      color={isSelected ? txColor.gray[0].hex() : txColor.gray[4].hex()}
+      backgroundColor={isSelected ? bgColor.gray[0].hex() : bgColor.gray[3].hex()}
+      color={isSelected ? txColor.gray[4].hex() : txColor.gray[0].hex()}
       {...props}
     >
       <Box pointerEvents={'none'}>{children}</Box>

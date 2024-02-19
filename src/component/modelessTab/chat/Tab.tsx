@@ -1,8 +1,8 @@
 import { ChatIcon } from '@chakra-ui/icons';
 import { Grid, Text } from '@chakra-ui/react';
-import React, { useMemo } from 'react';
-import { useSelectedChannelIndex } from './useChatModelessTab';
-import { ModelessTab, ModelessTabProps } from '@/component/atom/ModelessTab';
+import React from 'react';
+import { useSelectedChannelId } from './useChatModelessTab';
+import { ModelessTab, ModelessTabProps } from '@/component/modeless/ModelessTab';
 import { DataBlockId } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
@@ -14,11 +14,7 @@ export type TabProps = ModelessTabProps & {
 
 export const Tab: React.FC<TabProps> = ({ tabId, chatDataBlockId, ...modelessTabProps }) => {
   const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
-  const { selectedChannelIndex } = useSelectedChannelIndex(tabId);
-  const selectedChannelId = useMemo(
-    () => chat?.channelList.at(selectedChannelIndex) ?? DataBlockId.none,
-    [chat, selectedChannelIndex],
-  );
+  const { selectedChannelId } = useSelectedChannelId(tabId, chat?.channelList ?? []);
   const { dataBlock: selectedChatChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.is);
 
   return (

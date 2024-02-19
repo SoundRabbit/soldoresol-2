@@ -31,11 +31,11 @@ export const ChatMessageDataBlock = {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  create(props: Partial<ChatMessageDataBlock>): ChatMessageDataBlock {
-    const id = props.id ?? uuidv4();
-    const filterChannelList = props.filterChannelList ?? [];
-    const originalMessage = props.originalMessage ?? '';
-    const timestamp = props.timestamp ?? Date.now();
+  create(props?: Partial<ChatMessageDataBlock>): ChatMessageDataBlock {
+    const id = props?.id ?? uuidv4();
+    const filterChannelList = props?.filterChannelList ?? [];
+    const originalMessage = props?.originalMessage ?? '';
+    const timestamp = props?.timestamp ?? Date.now();
     return {
       id,
       dataBlockType: dataBlockType,

@@ -4,11 +4,11 @@ import { DataBlockId } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 
-export type ChatChannelButtonProps = TabProps & {
+export type ChatChannelTabButtonProps = TabProps & {
   chatChanneDataBlocklId: DataBlockId;
 };
 
-export const ChatChannelButton: React.FC<ChatChannelButtonProps> = ({ chatChanneDataBlocklId, ...props }) => {
+export const ChatChannelTabButton: React.FC<ChatChannelTabButtonProps> = ({ chatChanneDataBlocklId, ...props }) => {
   const { dataBlock: chatChannel } = useDataBlock(chatChanneDataBlocklId, ChatChannelDataBlock.is);
 
   return (

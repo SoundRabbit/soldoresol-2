@@ -24,9 +24,9 @@ export const GameDataBlock = {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  create(props: Partial<GameDataBlock>): GameDataBlock {
-    const id = props.id ?? uuidv4();
-    const sceneList = props.sceneList ?? [];
+  create(props?: Partial<GameDataBlock>): GameDataBlock {
+    const id = props?.id ?? uuidv4();
+    const sceneList = props?.sceneList ?? [];
     return {
       id,
       dataBlockType: dataBlockType,

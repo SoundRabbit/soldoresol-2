@@ -2,25 +2,44 @@ import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
 import { DataBlockId } from '@/dataBlock';
 import { useSetState } from '@/hook/useSetState';
+import { useTabIndex } from '@/hook/useTabIndex';
 
 const SWR_KEY = 'local/modelessTab';
 
-export const useSelectedChannelIndex = (tabId: string) => {
-  const swrKey = [SWR_KEY, tabId, 'selectedChannelIndex'];
+export const useSelectedChannelId = (tabId: string, channelIdList?: DataBlockId[]) => {
+  const swrKey = [SWR_KEY, tabId, 'selectedChannelId'];
 
-  const { data: maybeSelectedChannelIndex, mutate: mutateSelectedChannelIndex } = useSWR<number>(swrKey, null);
-  const selectedChannelIndex = useMemo(() => maybeSelectedChannelIndex ?? 0, [maybeSelectedChannelIndex]);
-
-  const setSelectedChannelIndexWithCallback = useCallback(
-    (callback: (prevIndex: number) => number) => {
-      mutateSelectedChannelIndex((prevIndex) => callback(prevIndex ?? 0), { revalidate: false });
-    },
-    [mutateSelectedChannelIndex],
+  const { data: maybeSelectedChannelId, mutate: mutateSelectedChannelId } = useSWR<DataBlockId>(swrKey, null);
+  const selectedChannelId = useMemo(
+    () => maybeSelectedChannelId ?? channelIdList?.at(0) ?? DataBlockId.none,
+    [maybeSelectedChannelId, channelIdList],
   );
 
-  const setSelectedChannelIndex = useSetState(setSelectedChannelIndexWithCallback);
+  const setSelectedChannelIdWithCallback = useCallback(
+    (callback: (prevId: DataBlockId) => DataBlockId) => {
+      mutateSelectedChannelId((prevId) => callback(prevId ?? DataBlockId.none), { revalidate: false });
+    },
+    [mutateSelectedChannelId],
+  );
 
-  return { selectedChannelIndex, setSelectedChannelIndex };
+  const setSelectedChannelId = useSetState(setSelectedChannelIdWithCallback);
+
+  return { selectedChannelId, setSelectedChannelId };
+};
+
+export const useSelectedChannelIdWithTabIndex = (tabId: string, channelIdList: DataBlockId[]) => {
+  const { selectedChannelId: maybeSelectedChannelId, setSelectedChannelId } = useSelectedChannelId(tabId);
+  const tabIndex = useTabIndex(maybeSelectedChannelId, channelIdList);
+
+  const selectedChannelId = useMemo(
+    () =>
+      maybeSelectedChannelId !== DataBlockId.none
+        ? maybeSelectedChannelId
+        : channelIdList.at(tabIndex) ?? DataBlockId.none,
+    [maybeSelectedChannelId, channelIdList, tabIndex],
+  );
+
+  return { selectedChannelId, setSelectedChannelId, tabIndex };
 };
 
 export const useSelectedTargetChannelIdList = (tabId: string) => {

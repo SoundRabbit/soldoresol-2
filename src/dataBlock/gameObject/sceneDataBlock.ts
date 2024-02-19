@@ -24,6 +24,20 @@ export const SceneDataBlock = {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
+  create(props?: Partial<SceneDataBlock>): SceneDataBlock {
+    const id = props?.id ?? '';
+    const prefab = props?.prefab ?? '';
+    const name = props?.name ?? '';
+    return {
+      id,
+      dataBlockType,
+      prefab,
+      name,
+      pack: SceneDataBlock.pack,
+      unpack: SceneDataBlock.unpack,
+    };
+  },
+
   pack(self: SceneDataBlock): Promise<PackedSceneDataBlock> {
     return (async () => {
       return {

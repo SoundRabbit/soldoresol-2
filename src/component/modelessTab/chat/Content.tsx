@@ -1,15 +1,17 @@
-import { Flex, FlexProps, Grid, IconButton, TabList, TabPanels, Tabs } from '@chakra-ui/react';
-import React, { useCallback, useMemo } from 'react';
-import { ChatChannelButton } from './implContent/ChatChannelButton';
-import { ChatChannelPanel } from './implContent/ChatChannelPanel';
-import { MessageTargetToggleButton } from './implContent/MessageTargetToggleButton';
-import { useSelectedChannelIndex, useSelectedTargetChannelIdList } from './useChatModelessTab';
-import { Textarea } from '@/component/atom/Textarea';
-import { PaperAirPlaneIcon } from '@/component/atom/icon/PaperAirPlaneIcon';
-import { ModelessContentProps } from '@/component/molecule/Modeless';
+import { Box, FlexProps, Grid, IconButton, Stack, TabList, TabPanels, Tabs, Text } from '@chakra-ui/react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { ChatChannelTabButton } from './Content/ChatChannelTabButton';
+import { ChatChannelTabPanel } from './Content/ChatChannelTabPanel';
+import { MessageTargetToggleButton } from './Content/MessageTargetToggleButton';
+import { useSelectedChannelIdWithTabIndex, useSelectedTargetChannelIdList } from './useChatModelessTab';
+import { Textarea } from '@/component/common/Textarea';
+import { PaperAirPlaneIcon } from '@/component/common/icon/PaperAirPlaneIcon';
+import { ModelessContentProps } from '@/component/modeless/Modeless';
 import { DataBlockId } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
+import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
+import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
 import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/hook/useDataBlock';
 import { bgColor, txColor } from '@/util/openColor';
 
@@ -20,34 +22,50 @@ export type ContentProps = FlexProps &
 
 export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
   const { add: addDataBlock } = useDataBlockTable();
-  const { dataBlock: chat, update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
-  const { dataBlockList: chatChannelList } = useDataBlockList(chat?.channelList ?? [], ChatChannelDataBlock.is);
-  const { selectedChannelIndex, setSelectedChannelIndex } = useSelectedChannelIndex(tabId);
-  const { selectedTargetChannelIdList, setSelectedTargetChannelIdList } = useSelectedTargetChannelIdList(tabId);
+  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
+  const { update: updateMessageList } = useDataBlock(
+    chat?.messageList ?? DataBlockId.none,
+    ChatMessageListDataBlock.is,
+  );
 
-  const selectedChannelId = useMemo(() => chat?.channelList.at(selectedChannelIndex), [chat, selectedChannelIndex]);
+  const chatChannelIdList = useMemo(() => chat?.channelList ?? [], [chat]);
+  const chatChannelIdListRef = useRef<string[]>([]);
+  chatChannelIdListRef.current = chatChannelIdList;
+
+  const { dataBlockList: chatChannelList } = useDataBlockList(chatChannelIdList, ChatChannelDataBlock.is);
+
+  const { selectedChannelId, setSelectedChannelId, tabIndex } = useSelectedChannelIdWithTabIndex(
+    tabId,
+    chatChannelIdList,
+  );
+
   const { dataBlock: selectedChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.is);
+
+  const { selectedTargetChannelIdList, setSelectedTargetChannelIdList } = useSelectedTargetChannelIdList(tabId);
 
   const selectedTargetChannelList = useMemo(
     () =>
-      chatChannelList?.filter(
-        (channel) => channel && channel.id !== selectedChannelId && selectedTargetChannelIdList.includes(channel.id),
-      ) ?? [],
+      chatChannelList.filter(
+        (channel) => channel.id !== selectedChannelId && selectedTargetChannelIdList.includes(channel.id),
+      ),
     [chatChannelList, selectedTargetChannelIdList, selectedChannelId],
   );
 
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatMessageKey, setChatMessageKey] = useState(0);
+
   const handleChangeSelectedChannelIndex = useCallback(
     (index: number) => {
-      setSelectedChannelIndex(index);
+      setSelectedChannelId((prevId) => {
+        const nextId = chatChannelIdListRef.current.at(index) ?? DataBlockId.none;
+        if (prevId !== nextId) {
+          setSelectedTargetChannelIdList([]);
+        }
+        return nextId;
+      });
     },
-    [setSelectedChannelIndex],
+    [setSelectedChannelId, setSelectedTargetChannelIdList],
   );
-
-  const handleAddChatChannel = useCallback(() => {
-    const channelDataBlock = ChatChannelDataBlock.create({ name: '新しいチャンネル' });
-    addDataBlock(channelDataBlock);
-    updateChat(async (chat) => ({ ...chat, channelList: [...chat.channelList, channelDataBlock.id] }));
-  }, [addDataBlock, updateChat]);
 
   const handleToggleTargetChannel = useCallback(
     (isToggled: boolean, chatChannelDataBlockId: DataBlockId) => {
@@ -60,31 +78,69 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
     [setSelectedTargetChannelIdList],
   );
 
+  const handleInputChatMessage = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setChatMessage(e.currentTarget.value);
+  }, []);
+
+  const handleSendChatMessage = useCallback(() => {
+    if (selectedChannel) {
+      updateMessageList(async (messageListDataBlock) => {
+        const newMessage = ChatMessageDataBlock.create({
+          originalMessage: chatMessage,
+          filterChannelList: [selectedChannel.id, ...selectedTargetChannelIdList],
+        });
+        const messageId = addDataBlock(newMessage);
+        if (messageId) {
+          const newMessageList = [...messageListDataBlock.messageList, messageId];
+          return { ...messageListDataBlock, messageList: newMessageList };
+        } else {
+          return messageListDataBlock;
+        }
+      });
+      setChatMessage('');
+      setChatMessageKey((prevKey) => prevKey + 1);
+    }
+  }, [selectedChannel, updateMessageList, chatMessage, selectedTargetChannelIdList, addDataBlock]);
+
+  const handleKeyDownInTextarea = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendChatMessage();
+      }
+    },
+    [handleSendChatMessage],
+  );
+
   return (
     <Grid gridTemplateColumns={'1fr'} gridTemplateRows={'1fr max-content'} width={'100%'} height={'100%'}>
       <Tabs
         isLazy={true}
         isManual={true}
-        index={selectedChannelIndex}
+        index={tabIndex}
+        orientation={'horizontal'}
         onChange={handleChangeSelectedChannelIndex}
         display={'grid'}
         gridTemplateColumns={'1fr'}
         gridTemplateRows={'max-content 1fr'}
+        overflow={'hidden'}
       >
-        <Flex as={TabList} flexWrap={'wrap'}>
+        <TabList flexWrap={'wrap'} paddingTop={'0.5em'} borderColor={bgColor.gray[1].hex()}>
           {chat?.channelList.map((channelId) => (
-            <ChatChannelButton
+            <ChatChannelTabButton
               key={channelId}
               chatChanneDataBlocklId={channelId}
               fontSize={'0.8rem'}
               paddingX={'1ch'}
               paddingY={'0.5em'}
+              borderColor={bgColor.gray[1].hex()}
+              _selected={{ color: txColor.blue[4].hex(), borderColor: bgColor.blue[4].hex() }}
             />
           ))}
-        </Flex>
-        <TabPanels>
+        </TabList>
+        <TabPanels overflow={'hidden'}>
           {chat?.channelList.map((channelId) => (
-            <ChatChannelPanel
+            <ChatChannelTabPanel
               key={channelId}
               chatChannelDataBlocklId={channelId}
               chatMessageListDataBlockId={chat!.messageList}
@@ -102,7 +158,7 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
         paddingY={'0.2em'}
       >
         <Grid gridTemplateColumns={'1fr max-content'}>
-          <Flex alignItems={'center'} flexWrap={'wrap'}>
+          <Stack direction={'row'} spacing={'0.7rch'} alignItems={'center'} flexWrap={'wrap'}>
             {chat?.channelList.map((channelId) => (
               <MessageTargetToggleButton
                 key={channelId}
@@ -110,7 +166,6 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
                 chatChannelDataBlockId={channelId}
                 onToggle={handleToggleTargetChannel}
                 fontSize={'0.7rem'}
-                marginX={'0.5ch'}
                 padding={'0.2em 1ch'}
                 backgroundColor={bgColor.gray[0].hex()}
                 color={txColor.gray[4].hex()}
@@ -127,18 +182,28 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
                 }}
               />
             ))}
-          </Flex>
-          <IconButton aria-label='Send' icon={<PaperAirPlaneIcon />} onClick={handleAddChatChannel} />
+          </Stack>
+          <IconButton aria-label='Send' icon={<PaperAirPlaneIcon />} onClick={handleSendChatMessage} />
         </Grid>
-        <Textarea
-          boxShadow={'none'}
-          borderRadius={0}
-          padding={0}
-          placeholder={`${selectedChannel ? `#${selectedChannel.name}` : ''} ${selectedTargetChannelList
-            .filter((channel) => ChatChannelDataBlock.is(channel) && channel.id !== selectedChannel?.id)
-            .map((channel) => ChatChannelDataBlock.is(channel) && `#${channel.name}`)
-            .join(' ')} にメッセージを送信`}
-        />
+        <Box>
+          <Textarea
+            key={chatMessageKey}
+            defaultValue={chatMessage}
+            onChange={handleInputChatMessage}
+            onKeyDown={handleKeyDownInTextarea}
+            boxShadow={'none'}
+            borderRadius={0}
+            padding={0}
+            placeholder={`${selectedChannel ? `#${selectedChannel.name}` : ''} ${selectedTargetChannelList
+              .filter((channel) => ChatChannelDataBlock.is(channel) && channel.id !== selectedChannel?.id)
+              .map((channel) => ChatChannelDataBlock.is(channel) && `#${channel.name}`)
+              .join(' ')} にメッセージを送信`}
+          />
+          <Stack direction={'row'} spacing={'2ch'} fontSize={'0.7rem'}>
+            <Text>Shift + Enter で改行</Text>
+            <Text>Enter で送信</Text>
+          </Stack>
+        </Box>
       </Grid>
     </Grid>
   );

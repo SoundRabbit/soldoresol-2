@@ -27,9 +27,9 @@ export const ChatMessageListDataBlock = {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  create(props: Partial<ChatMessageListDataBlock>): ChatMessageListDataBlock {
-    const id = props.id ?? uuidv4();
-    const messageList = props.messageList ?? [];
+  create(props?: Partial<ChatMessageListDataBlock>): ChatMessageListDataBlock {
+    const id = props?.id ?? uuidv4();
+    const messageList = props?.messageList ?? [];
 
     return {
       id,

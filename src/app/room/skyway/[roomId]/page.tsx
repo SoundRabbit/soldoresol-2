@@ -5,15 +5,14 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { SidePanelContent } from './SidePanelContent';
-import { Input } from '@/component/atom/Input';
-import { KeyValue } from '@/component/atom/KeyValue';
-import { SidePanel } from '@/component/atom/SidePanel';
+import { Input } from '@/component/common/Input';
+import { KeyValue } from '@/component/common/KeyValue';
+import { SidePanel } from '@/component/common/SidePanel';
+import { ModelessContentProps, ModelessMenuProps, ModelessTabProps } from '@/component/modeless/Modeless';
+import { ModelessContainer, ModelessContainerController } from '@/component/modeless/ModelessContainer';
 import { ChatModelessContent, ChatModelessMenu, ChatModelessTab } from '@/component/modelessTab/chat';
-import { ModelessContentProps, ModelessMenuProps, ModelessTabProps } from '@/component/molecule/Modeless';
-import { ModelessContainer, ModelessContainerController } from '@/component/organism/ModelessContainer';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
-import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
 import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
 import { GameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
 import { useDataBlockTable } from '@/hook/useDataBlock';
@@ -28,45 +27,44 @@ export const Page = () => {
   const modelessContainerRef = useRef<ModelessContainerController | null>(null);
 
   const createNewModeless = useCallback(() => {
-    const chatModelessTab = () => ({
-      tabId: uuidv4(),
-      renderTab: ({ modelessId, tabId, ...props }: ModelessTabProps) => {
-        return (
-          <ChatModelessTab
-            key={`${modelessId}/${tabId}`}
-            modelessId={modelessId}
-            tabId={tabId}
-            chatDataBlockId={chatDataBlockId}
-            {...props}
-          />
-        );
-      },
-      renderMenu: ({ modelessId, tabId, ...props }: ModelessMenuProps) => {
-        return (
-          <ChatModelessMenu
-            key={`${modelessId}/${tabId}`}
-            modelessId={modelessId}
-            tabId={tabId}
-            chatDataBlockId={chatDataBlockId}
-            {...props}
-          />
-        );
-      },
-      renderContent: ({ modelessId, tabId, ...props }: ModelessContentProps) => {
-        return (
-          <ChatModelessContent
-            key={`${modelessId}/${tabId}`}
-            modelessId={modelessId}
-            tabId={tabId}
-            chatDataBlockId={chatDataBlockId}
-            {...props}
-          />
-        );
-      },
-    });
-
     if (modelessContainerRef.current) {
-      modelessContainerRef.current.openModeless([chatModelessTab(), chatModelessTab(), chatModelessTab()]);
+      const chatModelessTab = {
+        tabId: uuidv4(),
+        renderTab: ({ modelessId, tabId, ...props }: ModelessTabProps) => {
+          return (
+            <ChatModelessTab
+              key={`${modelessId}/${tabId}`}
+              modelessId={modelessId}
+              tabId={tabId}
+              chatDataBlockId={chatDataBlockId}
+              {...props}
+            />
+          );
+        },
+        renderMenu: ({ modelessId, tabId, ...props }: ModelessMenuProps) => {
+          return (
+            <ChatModelessMenu
+              key={`${modelessId}/${tabId}`}
+              modelessId={modelessId}
+              tabId={tabId}
+              chatDataBlockId={chatDataBlockId}
+              {...props}
+            />
+          );
+        },
+        renderContent: ({ modelessId, tabId, ...props }: ModelessContentProps) => {
+          return (
+            <ChatModelessContent
+              key={`${modelessId}/${tabId}`}
+              modelessId={modelessId}
+              tabId={tabId}
+              chatDataBlockId={chatDataBlockId}
+              {...props}
+            />
+          );
+        },
+      };
+      modelessContainerRef.current.openModeless([chatModelessTab]);
     }
   }, [chatDataBlockId]);
 
@@ -76,27 +74,16 @@ export const Page = () => {
       addDataBlock(defaultGameDataBlock);
     }
     if (!isExistDataBlock(chatDataBlockId)) {
+      const chatChannelDescription = [
+        'チャットタブの追加 / 削除 / 編集方法',
+        'ウィンドウ右上の「≡」（ハンバーガーメニュー）から「チャットタブを編集」を選択してください。',
+      ].join('\n');
       const defaultChatChannelDataBlocks = [
-        ChatChannelDataBlock.create({ name: '全体' }),
-        ChatChannelDataBlock.create({ name: 'GM' }),
+        ChatChannelDataBlock.create({ name: 'メイン', description: chatChannelDescription }),
+        ChatChannelDataBlock.create({ name: '情報' }),
+        ChatChannelDataBlock.create({ name: '雑談' }),
       ];
-      const defaultChatMessageDataBlocks = [
-        ChatMessageDataBlock.create({
-          filterChannelList: [defaultChatChannelDataBlocks[0].id],
-          originalMessage: 'ようこそ！',
-        }),
-        ChatMessageDataBlock.create({
-          filterChannelList: [defaultChatChannelDataBlocks[0].id],
-          originalMessage: 'こんにちは！',
-        }),
-        ChatMessageDataBlock.create({
-          filterChannelList: [defaultChatChannelDataBlocks[1].id],
-          originalMessage: 'GMです。',
-        }),
-      ];
-      const defualtChatMessageListDataBlock = ChatMessageListDataBlock.create({
-        messageList: defaultChatMessageDataBlocks.map((message) => message.id),
-      });
+      const defualtChatMessageListDataBlock = ChatMessageListDataBlock.create();
       const defaultChatDataBlock = ChatDataBlock.create({
         id: chatDataBlockId,
         messageList: defualtChatMessageListDataBlock.id,
@@ -106,9 +93,7 @@ export const Page = () => {
       for (const channel of defaultChatChannelDataBlocks) {
         addDataBlock(channel);
       }
-      for (const message of defaultChatMessageDataBlocks) {
-        addDataBlock(message);
-      }
+
       addDataBlock(defualtChatMessageListDataBlock);
       addDataBlock(defaultChatDataBlock);
     }

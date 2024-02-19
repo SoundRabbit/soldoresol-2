@@ -1,7 +1,7 @@
 import { MenuDivider, MenuGroup, MenuItem, useDisclosure } from '@chakra-ui/react';
 import React from 'react';
 import { ChannelEditorModal } from './ChannelEditorModal';
-import { ModelessMenuProps } from '@/component/molecule/Modeless';
+import { ModelessMenuProps } from '@/component/modeless/Modeless';
 import { DataBlockId } from '@/dataBlock';
 
 export type MenuProps = ModelessMenuProps & {

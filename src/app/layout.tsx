@@ -2,6 +2,7 @@ import { Box } from '@chakra-ui/react';
 import { Metadata } from 'next';
 import { fonts } from './fonts';
 import { Providers } from './providers';
+import './style.css';
 
 export const metadata: Metadata = {
   title: 'Soldoresol',

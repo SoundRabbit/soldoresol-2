@@ -1,0 +1,25 @@
+:root {
+  --scrollbar-width: 2rch;
+  --scrollbar-thumb-color: #0002;
+  --scrollbar-thumb-color-light: #fff2;
+  --scrollbar-track-color: transparent;
+  scrollbar-width: var(--scrollbar-width);
+}
+::-webkit-scrollbar {
+  background-color: var(--scrollbar-track-color);
+  width: var(--scrollbar-width);
+}
+::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track-color);
+}
+::-webkit-scrollbar-thumb {
+  min-height: min(80%, 5rem);
+  background-color: var(--scrollbar-thumb-color);
+  border-radius: 0.75rch;
+  border-right: 0.5rch solid transparent;
+  border-left: 0.5rch solid transparent;
+  background-clip: padding-box;
+}
+.bg-dark::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-color-light);
+}

@@ -10,5 +10,5 @@ export type ChatMessageProps = BoxProps & {
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ chatMessageDataBlockId }) => {
   const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlockId, ChatMessageDataBlock.is);
-  return <Box>{chatMessage?.originalMessage}</Box>;
+  return <Box whiteSpace={'pre-wrap'}>{chatMessage?.originalMessage}</Box>;
 };
