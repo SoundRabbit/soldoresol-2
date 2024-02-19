@@ -1,7 +1,7 @@
 import { Tab, TabProps } from '@chakra-ui/react';
 import React from 'react';
 import { DataBlockId } from '@/dataBlock';
-import { chatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 
 export type ChatChannelButtonProps = TabProps & {
@@ -9,7 +9,7 @@ export type ChatChannelButtonProps = TabProps & {
 };
 
 export const ChatChannelButton: React.FC<ChatChannelButtonProps> = ({ chatChanneDataBlocklId, ...props }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChanneDataBlocklId, chatChannelDataBlock.is);
+  const { dataBlock: chatChannel } = useDataBlock(chatChanneDataBlocklId, ChatChannelDataBlock.is);
 
   return (
     <Tab {...props}>

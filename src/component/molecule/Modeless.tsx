@@ -18,7 +18,7 @@ import { Rnd } from 'react-rnd';
 import { OnMoveTab, parseDataTransfer } from '@/component/atom/ModelessTab';
 import { CheckBoxIcon } from '@/component/atom/icon/CheckBoxIcon';
 import { MouseLeftButtonIcon } from '@/component/atom/icon/MouseLeftButtonIcon';
-import { openColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/util/openColor';
 
 export type ModelessTabProps = {
   modelessId: string;
@@ -330,13 +330,13 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
           flexDirection={'column'}
           width={'100%'}
           height={'100%'}
-          border={`1px solid ${openColor.gray[9].hex()}`}
+          border={`1px solid ${bgColor.gray[4].hex()}`}
           {...props}
         >
           <Flex
             className={'rnd-drag-handle'}
             paddingLeft={'0.5ch'}
-            backgroundColor={openColor.gray[9].hex()}
+            backgroundColor={bgColor.gray[4].hex()}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
@@ -368,7 +368,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
                     <MenuButton
                       as={IconButton}
                       variant='unstyled'
-                      icon={<HamburgerIcon color={openColor.gray[0].hex()} />}
+                      icon={<HamburgerIcon color={txColor.gray[0].hex()} />}
                       height={'2.5rem'}
                       data-element-type={'menu-button'}
                     />
@@ -383,7 +383,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
                         >
                           <Text>グリッドにスナップ</Text>
                           {isSnapToGrid && (
-                            <CheckBoxIcon color={openColor.gray[0].hex()} backgroundColor={openColor.blue[9].hex()} />
+                            <CheckBoxIcon color={txColor.gray[0].hex()} backgroundColor={bgColor.blue[4].hex()} />
                           )}
                         </Flex>
                         <MenuItem onClick={handleCloseSelectedTab} paddingY={'0.5em'}>
@@ -413,7 +413,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
               }}
             </Menu>
           </Flex>
-          <Box flexGrow={1} overflow={'hidden'} backgroundColor={openColor.gray[0].hex()}>
+          <Box flexGrow={1} overflow={'hidden'} backgroundColor={bgColor.gray[0].hex()}>
             {selectedTab?.renderContent({ modelessId, tabId: selectedTabId })}
           </Box>
         </Flex>

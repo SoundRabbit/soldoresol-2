@@ -1,37 +1,38 @@
 import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
-import { DataBlock, DataBlockId, packedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Game';
 
 export interface GameDataBlock extends DataBlock {
   dataBlockType: typeof dataBlockType;
   sceneList: DataBlockId[];
-  pack(self: GameDataBlock): Promise<PackedGameDataBlock>;
-  unpack(data: any): Promise<GameDataBlock | undefined>;
+  pack(self: this): Promise<PackedGameDataBlock>;
 }
 
-const packedGameDataBlock = t.intersection([
-  packedDataBlock,
+export const PackedGameDataBlock = t.intersection([
+  PackedDataBlock,
   t.type({ dataBlockType: t.literal(dataBlockType), sceneList: t.array(t.string) }),
 ]);
 
-export type PackedGameDataBlock = t.TypeOf<typeof packedGameDataBlock>;
+export type PackedGameDataBlock = t.TypeOf<typeof PackedGameDataBlock>;
 
-export const gameDataBlock = {
+export const GameDataBlock = {
+  dataBlockType,
+
   is(data: any): data is GameDataBlock {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  new(props: Partial<GameDataBlock>): GameDataBlock {
+  create(props: Partial<GameDataBlock>): GameDataBlock {
     const id = props.id ?? uuidv4();
     const sceneList = props.sceneList ?? [];
     return {
       id,
       dataBlockType: dataBlockType,
       sceneList,
-      pack: (self: GameDataBlock) => gameDataBlock.pack(self),
-      unpack: (data: object) => gameDataBlock.unpack(data),
+      pack: GameDataBlock.pack,
+      unpack: GameDataBlock.unpack,
     };
   },
 
@@ -47,13 +48,13 @@ export const gameDataBlock = {
 
   unpack(data: any): Promise<GameDataBlock | undefined> {
     return (async () => {
-      if (!packedGameDataBlock.is(data)) return undefined;
+      if (!PackedGameDataBlock.is(data)) return undefined;
       return {
         id: data.id,
         dataBlockType: data.dataBlockType,
         sceneList: data.sceneList,
-        pack: (self: GameDataBlock) => gameDataBlock.pack(self),
-        unpack: (data: object) => gameDataBlock.unpack(data),
+        pack: (self: GameDataBlock) => GameDataBlock.pack(self),
+        unpack: (data: object) => GameDataBlock.unpack(data),
       };
     })();
   },

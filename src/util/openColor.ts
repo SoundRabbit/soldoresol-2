@@ -184,3 +184,35 @@ export const openColor = {
   yellow,
   orange,
 };
+
+export const txColor = {
+  gray: [openColor.gray[1], openColor.gray[3], openColor.gray[5], openColor.gray[7], openColor.gray[9]],
+  red: [openColor.red[1], openColor.red[3], openColor.red[5], openColor.red[7], openColor.red[9]],
+  pink: [openColor.pink[1], openColor.pink[3], openColor.pink[5], openColor.pink[7], openColor.pink[9]],
+  grape: [openColor.grape[1], openColor.grape[3], openColor.grape[5], openColor.grape[7], openColor.grape[9]],
+  violet: [openColor.violet[1], openColor.violet[3], openColor.violet[5], openColor.violet[7], openColor.violet[9]],
+  indigo: [openColor.indigo[1], openColor.indigo[3], openColor.indigo[5], openColor.indigo[7], openColor.indigo[9]],
+  blue: [openColor.blue[1], openColor.blue[3], openColor.blue[5], openColor.blue[7], openColor.blue[9]],
+  cyan: [openColor.cyan[1], openColor.cyan[3], openColor.cyan[5], openColor.cyan[7], openColor.cyan[9]],
+  teal: [openColor.teal[1], openColor.teal[3], openColor.teal[5], openColor.teal[7], openColor.teal[9]],
+  green: [openColor.green[1], openColor.green[3], openColor.green[5], openColor.green[7], openColor.green[9]],
+  lime: [openColor.lime[1], openColor.lime[3], openColor.lime[5], openColor.lime[7], openColor.lime[9]],
+  yellow: [openColor.yellow[1], openColor.yellow[3], openColor.yellow[5], openColor.yellow[7], openColor.yellow[9]],
+  orange: [openColor.orange[1], openColor.orange[3], openColor.orange[5], openColor.orange[7], openColor.orange[9]],
+};
+
+export const bgColor = {
+  gray: [openColor.gray[0], openColor.gray[2], openColor.gray[4], openColor.gray[6], openColor.gray[8]],
+  red: [openColor.red[0], openColor.red[2], openColor.red[4], openColor.red[6], openColor.red[8]],
+  pink: [openColor.pink[0], openColor.pink[2], openColor.pink[4], openColor.pink[6], openColor.pink[8]],
+  grape: [openColor.grape[0], openColor.grape[2], openColor.grape[4], openColor.grape[6], openColor.grape[8]],
+  violet: [openColor.violet[0], openColor.violet[2], openColor.violet[4], openColor.violet[6], openColor.violet[8]],
+  indigo: [openColor.indigo[0], openColor.indigo[2], openColor.indigo[4], openColor.indigo[6], openColor.indigo[8]],
+  blue: [openColor.blue[0], openColor.blue[2], openColor.blue[4], openColor.blue[6], openColor.blue[8]],
+  cyan: [openColor.cyan[0], openColor.cyan[2], openColor.cyan[4], openColor.cyan[6], openColor.cyan[8]],
+  teal: [openColor.teal[0], openColor.teal[2], openColor.teal[4], openColor.teal[6], openColor.teal[8]],
+  green: [openColor.green[0], openColor.green[2], openColor.green[4], openColor.green[6], openColor.green[8]],
+  lime: [openColor.lime[0], openColor.lime[2], openColor.lime[4], openColor.lime[6], openColor.lime[8]],
+  yellow: [openColor.yellow[0], openColor.yellow[2], openColor.yellow[4], openColor.yellow[6], openColor.yellow[8]],
+  orange: [openColor.orange[0], openColor.orange[2], openColor.orange[4], openColor.orange[6], openColor.orange[8]],
+};

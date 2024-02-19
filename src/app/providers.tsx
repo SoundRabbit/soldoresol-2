@@ -1,13 +1,13 @@
 'use client';
 
 import { ChakraProvider } from '@chakra-ui/react';
-import { DataBlockProvider } from '@/context/DataBlock';
+import { DataBlockTableProvider } from '@/context/DataBlockTable';
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <DataBlockProvider>
+    <DataBlockTableProvider>
       <ChakraProvider>{children}</ChakraProvider>
-    </DataBlockProvider>
+    </DataBlockTableProvider>
   );
 };
 

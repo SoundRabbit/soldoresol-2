@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChatMessage } from '@/component/atom/ChatMessage';
 import { DataBlockId } from '@/dataBlock';
-import { chatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
+import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 
 export type ChatChannelPanelMessageProps = {
@@ -13,7 +13,7 @@ export const ChatChannelPanelMessage: React.FC<ChatChannelPanelMessageProps> = (
   chatMessageDataBlocklId,
   chatChannelDataBlocklId,
 }) => {
-  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlocklId, chatMessageDataBlock.is);
+  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlocklId, ChatMessageDataBlock.is);
 
   if (chatMessage?.filterChannelList.includes(chatChannelDataBlocklId)) {
     return <ChatMessage chatMessageDataBlockId={chatMessage.id} />;

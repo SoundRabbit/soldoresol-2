@@ -1,6 +1,6 @@
 import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
-import { DataBlock, DataBlockId, packedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Chat';
 
@@ -8,12 +8,11 @@ export interface ChatDataBlock extends DataBlock {
   dataBlockType: typeof dataBlockType;
   messageList: DataBlockId;
   channelList: DataBlockId[];
-  pack(self: ChatDataBlock): Promise<PackedChatDataBlock>;
-  unpack(data: any): Promise<ChatDataBlock | undefined>;
+  pack(self: this): Promise<PackedChatDataBlock>;
 }
 
-export const packedChatDataBlock = t.intersection([
-  packedDataBlock,
+export const PackedChatDataBlock = t.intersection([
+  PackedDataBlock,
   t.type({
     dataBlockType: t.literal(dataBlockType),
     messageList: t.string,
@@ -21,14 +20,16 @@ export const packedChatDataBlock = t.intersection([
   }),
 ]);
 
-export type PackedChatDataBlock = t.TypeOf<typeof packedChatDataBlock>;
+export type PackedChatDataBlock = t.TypeOf<typeof PackedChatDataBlock>;
 
-export const chatDataBlock = {
+export const ChatDataBlock = {
+  dataBlockType,
+
   is(data: any): data is ChatDataBlock {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  new(props: Partial<ChatDataBlock>): ChatDataBlock {
+  create(props: Partial<ChatDataBlock>): ChatDataBlock {
     const id = props.id ?? uuidv4();
     const messageList = props.messageList ?? '';
     const channelList = props.channelList ?? [];
@@ -38,8 +39,8 @@ export const chatDataBlock = {
       dataBlockType: dataBlockType,
       messageList,
       channelList,
-      pack: (self: ChatDataBlock) => chatDataBlock.pack(self),
-      unpack: (data: object) => chatDataBlock.unpack(data),
+      pack: ChatDataBlock.pack,
+      unpack: ChatDataBlock.unpack,
     };
   },
 
@@ -56,14 +57,14 @@ export const chatDataBlock = {
 
   unpack(data: any): Promise<ChatDataBlock | undefined> {
     return (async () => {
-      if (!packedChatDataBlock.is(data)) return undefined;
+      if (!PackedChatDataBlock.is(data)) return undefined;
       return {
         id: data.id,
         dataBlockType: data.dataBlockType,
         messageList: data.messageList,
         channelList: data.channelList,
-        pack: (self: ChatDataBlock) => chatDataBlock.pack(self),
-        unpack: (data: object) => chatDataBlock.unpack(data),
+        pack: ChatDataBlock.pack,
+        unpack: ChatDataBlock.unpack,
       };
     })();
   },

@@ -2,12 +2,13 @@ import { useCallback, useContext, useEffect, useMemo } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import useSWRInfinite from 'swr/infinite';
 import { v4 as uuidv4 } from 'uuid';
-import { DataBlockTableContext } from '@/context/DataBlock';
+import { DataBlockTableContext } from '@/context/DataBlockTable';
+import { AnnotDataBlock } from '@/context/DataBlockTable/annotDataBlock';
 import { DataBlock, DataBlockId } from '@/dataBlock';
 
 const SWR_KEY = 'local/dataBlock';
 
-const dataBlockSwrKey = (id: DataBlockId | undefined) => [SWR_KEY, id];
+const dataBlockSwrKey = (id: DataBlockId) => [SWR_KEY, id];
 
 export const useDataBlockTable = () => {
   const dataBlockTableRef = useContext(DataBlockTableContext);
@@ -28,60 +29,58 @@ export const useDataBlockTable = () => {
       if (!dataBlockTableRef) return;
 
       const updateTimestamp = Date.now();
-      const annotDataBlock = (() => {
-        const insertPosition = dataBlockTableRef.current[dataBlock.id];
-        if (!!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp) {
-          const newId = uuidv4();
-          return { ...dataBlock, id: newId, updateTimestamp, isAvailable: true };
-        } else {
-          return { ...dataBlock, updateTimestamp, isAvailable: true };
-        }
-      })();
-      dataBlockTableRef.current[annotDataBlock.id] = annotDataBlock;
+      const insertPosition = dataBlockTableRef.current[dataBlock.id];
+      const dataBlockId =
+        !!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp
+          ? uuidv4()
+          : dataBlock.id;
+      const annotDataBlock = AnnotDataBlock.from(dataBlock, updateTimestamp, true);
 
-      mutate([SWR_KEY, annotDataBlock.id]);
+      dataBlockTableRef.current[dataBlockId] = annotDataBlock;
 
-      return annotDataBlock.id;
+      mutate(dataBlockSwrKey(dataBlockId));
+
+      return dataBlockId;
     },
     [dataBlockTableRef, mutate],
   );
 
   const remove = useCallback(
-    (id: DataBlockId) => {
+    (dataBlockId: DataBlockId) => {
       if (!dataBlockTableRef) return;
 
-      const annotDataBlock = dataBlockTableRef.current[id];
+      const annotDataBlock = dataBlockTableRef.current[dataBlockId];
       const updateTimestamp = Date.now();
 
       if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
 
       const newAnnotDataBlock = { ...annotDataBlock, isAvailable: false, updateTimestamp };
 
-      dataBlockTableRef.current[id] = newAnnotDataBlock;
-      mutate([SWR_KEY, id]);
+      dataBlockTableRef.current[dataBlockId] = newAnnotDataBlock;
+      mutate(dataBlockSwrKey(dataBlockId));
 
-      return newAnnotDataBlock.id;
+      return dataBlockId;
     },
     [dataBlockTableRef, mutate],
   );
 
   const update = useCallback(
-    async (id: DataBlockId, updateCallback: (dataBlock: DataBlock) => Promise<DataBlock>) => {
+    async (dataBlockId: DataBlockId, updateCallback: (dataBlock: DataBlock) => Promise<DataBlock>) => {
       if (!dataBlockTableRef) return;
 
-      const annotDataBlock = dataBlockTableRef.current[id];
+      const annotDataBlock = dataBlockTableRef.current[dataBlockId];
       const updateTimestamp = Date.now();
 
       if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
 
       const isAvailable = annotDataBlock.isAvailable;
-      const newDataBlock = await updateCallback(annotDataBlock);
-      const newAnnotDataBlock = { ...newDataBlock, updateTimestamp, isAvailable };
+      const newPyaload = await updateCallback(annotDataBlock.payload);
+      const newAnnotDataBlock = { ...annotDataBlock, payload: newPyaload, updateTimestamp, isAvailable };
 
-      dataBlockTableRef.current[id] = newAnnotDataBlock;
-      mutate([SWR_KEY, id]);
+      dataBlockTableRef.current[dataBlockId] = newAnnotDataBlock;
+      mutate(dataBlockSwrKey(dataBlockId));
 
-      return newAnnotDataBlock.id;
+      return dataBlockId;
     },
     [dataBlockTableRef, mutate],
   );
@@ -98,25 +97,23 @@ export const useDataBlockTable = () => {
 };
 
 export const useDataBlock = <T extends DataBlock>(
-  id: DataBlockId | undefined,
+  dataBlockId: DataBlockId,
   typeChecker: (data: DataBlock) => data is T,
 ) => {
   const dataBlockTableRef = useContext(DataBlockTableContext);
 
   const dataBlockFetcher = useCallback(async () => {
-    if (!dataBlockTableRef || !id) return;
+    if (!dataBlockTableRef) return;
 
-    return dataBlockTableRef.current[id];
-  }, [dataBlockTableRef, id]);
+    return dataBlockTableRef.current[dataBlockId];
+  }, [dataBlockTableRef, dataBlockId]);
 
   const { update } = useDataBlockTable();
-  const { data } = useSWR(dataBlockSwrKey(id), dataBlockFetcher);
+  const { data } = useSWR(dataBlockSwrKey(dataBlockId), dataBlockFetcher);
 
   const bindedUpdate = useCallback(
     async (updateCallback: (dataBlock: T) => Promise<T>) => {
-      if (!id) return;
-
-      await update(id, async (dataBlock) => {
+      await update(dataBlockId, async (dataBlock) => {
         if (typeChecker(dataBlock)) {
           return await updateCallback(dataBlock);
         } else {
@@ -124,12 +121,12 @@ export const useDataBlock = <T extends DataBlock>(
         }
       });
     },
-    [id, update, typeChecker],
+    [dataBlockId, update, typeChecker],
   );
 
   return useMemo(
     () => ({
-      dataBlock: !!data && typeChecker(data) ? data : undefined,
+      dataBlock: !!data && typeChecker(data.payload) ? data.payload : undefined,
       update: bindedUpdate,
     }),
     [data, bindedUpdate, typeChecker],
@@ -144,7 +141,7 @@ export const useDataBlockList = <T extends DataBlock>(
 
   const swrKey = useCallback(
     (index: number) => {
-      return dataBlockSwrKey(idList.at(index));
+      return dataBlockSwrKey(idList.at(index) ?? DataBlockId.none);
     },
     [idList],
   );
@@ -154,7 +151,7 @@ export const useDataBlockList = <T extends DataBlock>(
       if (!id) return;
       if (!dataBlockTableRef) return;
 
-      return dataBlockTableRef.current[id];
+      return dataBlockTableRef.current[id]?.payload;
     },
     [dataBlockTableRef],
   );

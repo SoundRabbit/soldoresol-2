@@ -8,16 +8,16 @@ import { SidePanelContent } from './SidePanelContent';
 import { Input } from '@/component/atom/Input';
 import { KeyValue } from '@/component/atom/KeyValue';
 import { SidePanel } from '@/component/atom/SidePanel';
+import { ChatModelessContent, ChatModelessMenu, ChatModelessTab } from '@/component/modelessTab/chat';
 import { ModelessContentProps, ModelessMenuProps, ModelessTabProps } from '@/component/molecule/Modeless';
 import { ModelessContainer, ModelessContainerController } from '@/component/organism/ModelessContainer';
-import { ChatModelessContent, ChatModelessMenu, ChatModelessTab } from '@/component/organism/modelessTab/chat';
-import { chatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { chatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
-import { chatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
-import { chatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
-import { gameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
+import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
+import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
+import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
+import { GameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
 import { useDataBlockTable } from '@/hook/useDataBlock';
-import { openColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/util/openColor';
 
 export const Page = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -42,7 +42,15 @@ export const Page = () => {
         );
       },
       renderMenu: ({ modelessId, tabId, ...props }: ModelessMenuProps) => {
-        return <ChatModelessMenu key={`${modelessId}/${tabId}`} {...props} />;
+        return (
+          <ChatModelessMenu
+            key={`${modelessId}/${tabId}`}
+            modelessId={modelessId}
+            tabId={tabId}
+            chatDataBlockId={chatDataBlockId}
+            {...props}
+          />
+        );
       },
       renderContent: ({ modelessId, tabId, ...props }: ModelessContentProps) => {
         return (
@@ -64,32 +72,32 @@ export const Page = () => {
 
   useEffect(() => {
     if (!isExistDataBlock(gameDataBlockId)) {
-      const defaultGameDataBlock = gameDataBlock.new({ id: gameDataBlockId });
+      const defaultGameDataBlock = GameDataBlock.create({ id: gameDataBlockId });
       addDataBlock(defaultGameDataBlock);
     }
     if (!isExistDataBlock(chatDataBlockId)) {
       const defaultChatChannelDataBlocks = [
-        chatChannelDataBlock.new({ name: '全体' }),
-        chatChannelDataBlock.new({ name: 'GM' }),
+        ChatChannelDataBlock.create({ name: '全体' }),
+        ChatChannelDataBlock.create({ name: 'GM' }),
       ];
       const defaultChatMessageDataBlocks = [
-        chatMessageDataBlock.new({
+        ChatMessageDataBlock.create({
           filterChannelList: [defaultChatChannelDataBlocks[0].id],
           originalMessage: 'ようこそ！',
         }),
-        chatMessageDataBlock.new({
+        ChatMessageDataBlock.create({
           filterChannelList: [defaultChatChannelDataBlocks[0].id],
           originalMessage: 'こんにちは！',
         }),
-        chatMessageDataBlock.new({
+        ChatMessageDataBlock.create({
           filterChannelList: [defaultChatChannelDataBlocks[1].id],
           originalMessage: 'GMです。',
         }),
       ];
-      const defualtChatMessageListDataBlock = chatMessageListDataBlock.new({
+      const defualtChatMessageListDataBlock = ChatMessageListDataBlock.create({
         messageList: defaultChatMessageDataBlocks.map((message) => message.id),
       });
-      const defaultChatDataBlock = chatDataBlock.new({
+      const defaultChatDataBlock = ChatDataBlock.create({
         id: chatDataBlockId,
         messageList: defualtChatMessageListDataBlock.id,
         channelList: defaultChatChannelDataBlocks.map((channel) => channel.id),
@@ -113,8 +121,8 @@ export const Page = () => {
         gridTemplateRows={'max-content max-content'}
         padding={'1ch'}
         rowGap={'1ch'}
-        backgroundColor={openColor.gray[8].hex()}
-        color={openColor.gray[0].hex()}
+        backgroundColor={bgColor.gray[4].hex()}
+        color={txColor.gray[0].hex()}
       >
         <KeyValue>
           <Text>ルームID</Text>

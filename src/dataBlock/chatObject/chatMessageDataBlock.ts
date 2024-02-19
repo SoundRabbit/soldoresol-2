@@ -1,6 +1,6 @@
 import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
-import { DataBlock, DataBlockId, packedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'ChatMessage';
 
@@ -9,12 +9,11 @@ export interface ChatMessageDataBlock extends DataBlock {
   filterChannelList: DataBlockId[];
   originalMessage: string;
   timestamp: number;
-  pack(self: ChatMessageDataBlock): Promise<PackedChatMessageDataBlock>;
-  unpack(data: any): Promise<ChatMessageDataBlock | undefined>;
+  pack(self: this): Promise<PackedChatMessageDataBlock>;
 }
 
-export const packedChatMessageDataBlock = t.intersection([
-  packedDataBlock,
+export const PackedChatMessageDataBlock = t.intersection([
+  PackedDataBlock,
   t.type({
     dataBlockType: t.literal(dataBlockType),
     filterChannelList: t.array(t.string),
@@ -23,14 +22,16 @@ export const packedChatMessageDataBlock = t.intersection([
   }),
 ]);
 
-export type PackedChatMessageDataBlock = t.TypeOf<typeof packedChatMessageDataBlock>;
+export type PackedChatMessageDataBlock = t.TypeOf<typeof PackedChatMessageDataBlock>;
 
-export const chatMessageDataBlock = {
+export const ChatMessageDataBlock = {
+  dataBlockType,
+
   is(data: any): data is ChatMessageDataBlock {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  new(props: Partial<ChatMessageDataBlock>): ChatMessageDataBlock {
+  create(props: Partial<ChatMessageDataBlock>): ChatMessageDataBlock {
     const id = props.id ?? uuidv4();
     const filterChannelList = props.filterChannelList ?? [];
     const originalMessage = props.originalMessage ?? '';
@@ -41,8 +42,8 @@ export const chatMessageDataBlock = {
       filterChannelList,
       originalMessage,
       timestamp,
-      pack: (self: ChatMessageDataBlock) => chatMessageDataBlock.pack(self),
-      unpack: (data: object) => chatMessageDataBlock.unpack(data),
+      pack: ChatMessageDataBlock.pack,
+      unpack: ChatMessageDataBlock.unpack,
     };
   },
 
@@ -60,15 +61,15 @@ export const chatMessageDataBlock = {
 
   unpack(data: any): Promise<ChatMessageDataBlock | undefined> {
     return (async () => {
-      if (!packedChatMessageDataBlock.is(data)) return undefined;
+      if (!PackedChatMessageDataBlock.is(data)) return undefined;
       return {
         id: data.id,
         dataBlockType: data.dataBlockType,
         filterChannelList: data.filterChannelList,
         originalMessage: data.originalMessage,
         timestamp: data.timestamp,
-        pack: (self: ChatMessageDataBlock) => chatMessageDataBlock.pack(self),
-        unpack: (data: object) => chatMessageDataBlock.unpack(data),
+        pack: ChatMessageDataBlock.pack,
+        unpack: ChatMessageDataBlock.unpack,
       };
     })();
   },

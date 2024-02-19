@@ -1,36 +1,36 @@
 import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
-import { DataBlock, packedDataBlock } from '@/dataBlock';
+import { DataBlock, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Image';
 
 export interface ImageDataBlock extends DataBlock {
   dataBlockType: typeof dataBlockType;
-  pack(self: ImageDataBlock): Promise<PackedImageDataBlock>;
-  unpack(data: any): Promise<ImageDataBlock | undefined>;
 }
 
-export const packedImageDataBlock = t.intersection([
-  packedDataBlock,
+export const PackedImageDataBlock = t.intersection([
+  PackedDataBlock,
   t.type({
     dataBlockType: t.literal(dataBlockType),
   }),
 ]);
 
-export type PackedImageDataBlock = t.TypeOf<typeof packedImageDataBlock>;
+export type PackedImageDataBlock = t.TypeOf<typeof PackedImageDataBlock>;
 
-export const imageDataBlock = {
+export const ImageDataBlock = {
+  dataBlockType,
+
   is(data: any): data is ImageDataBlock {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  new(props: Partial<ImageDataBlock>): ImageDataBlock {
+  create(props: Partial<ImageDataBlock>): ImageDataBlock {
     const id = props.id ?? uuidv4();
     return {
       id,
       dataBlockType: dataBlockType,
-      pack: (self: ImageDataBlock) => imageDataBlock.pack(self),
-      unpack: (data: object) => imageDataBlock.unpack(data),
+      pack: ImageDataBlock.pack,
+      unpack: ImageDataBlock.unpack,
     };
   },
 
@@ -45,12 +45,12 @@ export const imageDataBlock = {
 
   unpack(data: any): Promise<ImageDataBlock | undefined> {
     return (async () => {
-      if (!packedImageDataBlock.is(data)) return undefined;
+      if (!PackedImageDataBlock.is(data)) return undefined;
       return {
         id: data.id,
         dataBlockType: data.dataBlockType,
-        pack: (self: ImageDataBlock) => imageDataBlock.pack(self),
-        unpack: (data: object) => imageDataBlock.unpack(data),
+        pack: ImageDataBlock.pack,
+        unpack: ImageDataBlock.unpack,
       };
     })();
   },

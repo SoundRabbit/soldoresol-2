@@ -1,7 +1,7 @@
 import { Box, BoxProps } from '@chakra-ui/react';
 import React from 'react';
 import { DataBlockId } from '@/dataBlock';
-import { chatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
+import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 
 export type ChatMessageProps = BoxProps & {
@@ -9,6 +9,6 @@ export type ChatMessageProps = BoxProps & {
 };
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ chatMessageDataBlockId }) => {
-  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlockId, chatMessageDataBlock.is);
+  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlockId, ChatMessageDataBlock.is);
   return <Box>{chatMessage?.originalMessage}</Box>;
 };

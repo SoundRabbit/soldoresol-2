@@ -2,7 +2,7 @@ import { Box, BoxProps, Flex } from '@chakra-ui/react';
 import * as t from 'io-ts';
 import React, { useCallback, useMemo } from 'react';
 import { expect } from '@/util/expect';
-import { openColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/util/openColor';
 
 export type OnMoveTab = (srcModelessId: string, dstModelessId: string, srcTabId: string, dstTabIndex: number) => void;
 
@@ -102,8 +102,8 @@ export const ModelessTab: React.FC<ModelessTabProps> = ({
       paddingTop={'0.4em'}
       paddingBottom={'0.6em'}
       borderRadius={'0.5em 0.5em 0 0'}
-      backgroundColor={isSelected ? openColor.blue[8].hex() : openColor.gray[1].hex()}
-      color={isSelected ? openColor.gray[0].hex() : openColor.gray[8].hex()}
+      backgroundColor={isSelected ? bgColor.blue[4].hex() : bgColor.gray[0].hex()}
+      color={isSelected ? txColor.gray[0].hex() : txColor.gray[4].hex()}
       {...props}
     >
       <Box pointerEvents={'none'}>{children}</Box>

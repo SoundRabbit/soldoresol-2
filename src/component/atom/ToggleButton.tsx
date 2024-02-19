@@ -4,10 +4,9 @@ import React, { useMemo } from 'react';
 export type ToggleButtonProps = ButtonProps & {
   isActive?: boolean;
   onToggle?: (toggle: boolean) => void;
-  toggleProps?: (toggle: boolean) => ButtonProps;
 };
 
-export const ToggleButton: React.FC<ToggleButtonProps> = ({ isActive, onToggle, toggleProps, ...props }) => {
+export const ToggleButton: React.FC<ToggleButtonProps> = ({ isActive, onToggle, ...props }) => {
   const [isActiveInternal, setIsActiveInternal] = React.useState(isActive ?? false);
   const isToggleActive = useMemo(() => isActive ?? isActiveInternal, [isActive, isActiveInternal]);
 
@@ -15,8 +14,6 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({ isActive, onToggle, 
     setIsActiveInternal(!isToggleActive);
     onToggle && onToggle(!isToggleActive);
   }, [onToggle, isToggleActive]);
-
-  const additionalProps = useMemo(() => toggleProps?.(isToggleActive) ?? {}, [isToggleActive, toggleProps]);
 
   return (
     <Button
@@ -27,8 +24,8 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({ isActive, onToggle, 
       paddingX={'2ch'}
       paddingY={'0.25em'}
       height={'unset'}
+      data-is-selected={isToggleActive}
       {...props}
-      {...additionalProps}
     />
   );
 };
