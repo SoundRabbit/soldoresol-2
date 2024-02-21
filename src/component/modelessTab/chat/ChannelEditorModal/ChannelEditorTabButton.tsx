@@ -15,7 +15,7 @@ export type ChannelEditorTabButtonProps = Omit<TabProps, 'children'> & {
 };
 
 export const ChannelEditorTabButton: React.FC<ChannelEditorTabButtonProps> = ({ chatChannelDataBlockId, ...props }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.is);
+  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: chatChannelDataBlockId });
 

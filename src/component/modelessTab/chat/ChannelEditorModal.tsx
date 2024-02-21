@@ -39,12 +39,12 @@ export const ChannelEditorModal: React.FC<ChannelEditorModalProps> = ({
   ...props
 }) => {
   const { add: addDataBlock } = useDataBlockTable();
-  const { dataBlock: chat, update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
+  const { dataBlock: chat, update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
   const chatChannelIdList = useMemo(() => chat?.channelList ?? [], [chat]);
   const chatChannelIdListRef = useRef<string[]>([]);
   chatChannelIdListRef.current = chatChannelIdList;
 
-  const { dataBlockList: chatChannelList } = useDataBlockList(chatChannelIdList, ChatChannelDataBlock.is);
+  const { dataBlockList: chatChannelList } = useDataBlockList(chatChannelIdList, ChatChannelDataBlock.partialIs);
   const chatChannelListLengthRef = useRef(0);
   chatChannelListLengthRef.current = useMemo(() => chatChannelList.length, [chatChannelList]);
 

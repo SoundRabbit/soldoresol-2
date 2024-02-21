@@ -1,5 +1,7 @@
 {
   "extends": ["next", "next/core-web-vitals", "prettier"],
-  "plugins": [],
-  "rules": {}
+  "plugins": ["unused-imports"],
+  "rules": {
+    "unused-imports/no-unused-imports": "warn"
+  }
 }

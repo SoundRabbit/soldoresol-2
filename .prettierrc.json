@@ -11,5 +11,5 @@
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
   "importOrderGroupNamespaceSpecifiers": true,
-  "organizeImportsSkipDestructiveCodeActions": false
+  "organizeImportsSkipDestructiveCodeActions": true
 }

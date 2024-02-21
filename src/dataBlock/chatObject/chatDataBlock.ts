@@ -1,16 +1,15 @@
 import * as t from 'io-ts';
+import { Assign } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Chat';
 
-export interface ChatDataBlock extends DataBlock {
-  dataBlockType: typeof dataBlockType;
-  messageList: DataBlockId;
-  channelList: DataBlockId[];
-  pack(self: this): Promise<PackedChatDataBlock>;
-}
+export type ChatDataBlock = Assign<
+  DataBlock,
+  { dataBlockType: typeof dataBlockType; messageList: DataBlockId; channelList: DataBlockId[] }
+>;
 
 export const PackedChatDataBlock = t.intersection([
   PackedDataBlock,
@@ -26,7 +25,7 @@ export type PackedChatDataBlock = t.TypeOf<typeof PackedChatDataBlock>;
 export const ChatDataBlock = {
   dataBlockType,
 
-  is(data: any): data is ChatDataBlock {
+  partialIs(data: any): data is ChatDataBlock {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
@@ -40,8 +39,6 @@ export const ChatDataBlock = {
       dataBlockType: dataBlockType,
       messageList,
       channelList,
-      pack: ChatDataBlock.pack,
-      unpack: ChatDataBlock.unpack,
     };
   },
 
@@ -64,8 +61,6 @@ export const ChatDataBlock = {
         dataBlockType: data.dataBlockType,
         messageList: data.messageList,
         channelList: data.channelList,
-        pack: ChatDataBlock.pack,
-        unpack: ChatDataBlock.unpack,
       };
     })();
   },

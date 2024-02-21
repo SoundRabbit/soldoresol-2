@@ -25,24 +25,24 @@ export type ContentProps = FlexProps &
 
 export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
   const { add: addDataBlock } = useDataBlockTable();
-  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
+  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
   const { update: updateMessageList } = useDataBlock(
     chat?.messageList ?? DataBlockId.none,
-    ChatMessageListDataBlock.is,
+    ChatMessageListDataBlock.partialIs,
   );
 
   const chatChannelIdList = useMemo(() => chat?.channelList ?? [], [chat]);
   const chatChannelIdListRef = useRef<string[]>([]);
   chatChannelIdListRef.current = chatChannelIdList;
 
-  const { dataBlockList: chatChannelList } = useDataBlockList(chatChannelIdList, ChatChannelDataBlock.is);
+  const { dataBlockList: chatChannelList } = useDataBlockList(chatChannelIdList, ChatChannelDataBlock.partialIs);
 
   const { selectedChannelId, setSelectedChannelId, tabIndex } = useSelectedChannelIdWithTabIndex(
     tabId,
     chatChannelIdList,
   );
 
-  const { dataBlock: selectedChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.is);
+  const { dataBlock: selectedChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.partialIs);
 
   const { selectedTargetChannelIdList, setSelectedTargetChannelIdList } = useSelectedTargetChannelIdList(tabId);
 

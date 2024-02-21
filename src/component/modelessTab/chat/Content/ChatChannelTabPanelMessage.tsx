@@ -14,7 +14,7 @@ export const ChatChannelTabPanelMessage: React.FC<ChatChannelTabPanelMessageProp
   chatMessageDataBlocklId,
   chatChannelDataBlocklId,
 }) => {
-  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlocklId, ChatMessageDataBlock.is);
+  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlocklId, ChatMessageDataBlock.partialIs);
 
   if (chatMessage?.filterChannelList.includes(chatChannelDataBlocklId)) {
     return <ChatMessage chatMessageDataBlockId={chatMessage.id} />;

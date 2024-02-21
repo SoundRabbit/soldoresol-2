@@ -11,7 +11,7 @@ export type ChatChannelTabButtonProps = TabProps & {
 };
 
 export const ChatChannelTabButton: React.FC<ChatChannelTabButtonProps> = ({ chatChanneDataBlocklId, ...props }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChanneDataBlocklId, ChatChannelDataBlock.is);
+  const { dataBlock: chatChannel } = useDataBlock(chatChanneDataBlocklId, ChatChannelDataBlock.partialIs);
 
   return (
     <Tab {...props}>

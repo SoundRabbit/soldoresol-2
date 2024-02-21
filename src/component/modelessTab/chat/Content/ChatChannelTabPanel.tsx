@@ -19,7 +19,7 @@ export const ChatChannelTabPanel: React.FC<ChatChannelTabPanelProps> = ({
   chatChannelDataBlocklId,
   ...props
 }) => {
-  const { dataBlock: chatMessageList } = useDataBlock(chatMessageListDataBlockId, ChatMessageListDataBlock.is);
+  const { dataBlock: chatMessageList } = useDataBlock(chatMessageListDataBlockId, ChatMessageListDataBlock.partialIs);
   const descriptionParentRef = useRef<HTMLDivElement>(null);
 
   return (

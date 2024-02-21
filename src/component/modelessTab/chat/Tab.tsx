@@ -16,9 +16,9 @@ export type TabProps = ModelessTabProps & {
 };
 
 export const Tab: React.FC<TabProps> = ({ tabId, chatDataBlockId, ...modelessTabProps }) => {
-  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
+  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
   const { selectedChannelId } = useSelectedChannelId(tabId, chat?.channelList ?? []);
-  const { dataBlock: selectedChatChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.is);
+  const { dataBlock: selectedChatChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.partialIs);
 
   return (
     <ModelessTab tabId={tabId} {...modelessTabProps}>

@@ -23,7 +23,7 @@ export const ChatChannelTabPanelDescription: React.FC<ChatChannelTabPanelDescrip
   parentElement,
   ...props
 }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.is);
+  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
   const description = useMemo(() => chatChannel?.description ?? '', [chatChannel]);
 
   const [title, text] = useMemo(() => {

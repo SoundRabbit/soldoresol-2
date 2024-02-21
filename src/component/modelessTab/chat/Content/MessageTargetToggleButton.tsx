@@ -15,7 +15,7 @@ export const MessageTargetToggleButton: React.FC<MessageTargetToggleButtonProps>
   onToggle,
   ...props
 }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.is);
+  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
 
   const handleToggleTarget = useCallback(
     (isToggled: boolean) => {

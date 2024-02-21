@@ -1,19 +1,27 @@
 import * as t from 'io-ts';
+import { Assign, Subtract } from 'utility-types';
 
-export type DataBlockId = string;
+import { DataBlockId } from './dataBlockId';
+import { DataBlockType } from './dataBlockType';
 
-export const DataBlockId = {
-  none: '' as DataBlockId,
+export { DataBlockId } from './dataBlockId';
+export { DataBlockType } from './dataBlockType';
+
+export type DataBlock = {
+  id: DataBlockId;
+  dataBlockType: DataBlockType;
 };
 
-export type DataBlockType = string;
+const tDataBlock = t.type({
+  id: t.string,
+  dataBlockType: t.string,
+});
 
-export interface DataBlock {
-  readonly id: DataBlockId;
-  readonly dataBlockType: DataBlockType;
-  pack(self: this): Promise<PackedDataBlock>;
-  unpack(data: any): Promise<this | undefined>;
-}
+export const DataBlock = {
+  is(value: unknown): value is DataBlock {
+    return tDataBlock.is(value);
+  },
+};
 
 export const PackedDataBlock = t.type({
   id: t.readonly(t.string),
@@ -21,3 +29,9 @@ export const PackedDataBlock = t.type({
 });
 
 export type PackedDataBlock = t.TypeOf<typeof PackedDataBlock>;
+
+export type DiffOf<T> =
+  T extends object ? { [K in keyof T]: DiffOf<T[K]> }
+  : ({ type: 'ref' } | { type: 'remove' } | { type: 'replace'; value: T }) & { defaultValue: T };
+
+export type RefOf<T extends DataBlock> = Assign<DataBlock, { prefab?: DataBlockId }, DiffOf<Subtract<T, DataBlock>>>;

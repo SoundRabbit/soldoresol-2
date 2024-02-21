@@ -1,15 +1,12 @@
 import * as t from 'io-ts';
+import { Assign } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
+import { DataBlock, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Game';
 
-export interface GameDataBlock extends DataBlock {
-  dataBlockType: typeof dataBlockType;
-  sceneList: DataBlockId[];
-  pack(self: this): Promise<PackedGameDataBlock>;
-}
+export type GameDataBlock = Assign<DataBlock, { dataBlockType: typeof dataBlockType; sceneList: string[] }>;
 
 export const PackedGameDataBlock = t.intersection([
   PackedDataBlock,
@@ -21,7 +18,7 @@ export type PackedGameDataBlock = t.TypeOf<typeof PackedGameDataBlock>;
 export const GameDataBlock = {
   dataBlockType,
 
-  is(data: any): data is GameDataBlock {
+  partialIs(data: any): data is GameDataBlock {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
@@ -32,8 +29,6 @@ export const GameDataBlock = {
       id,
       dataBlockType: dataBlockType,
       sceneList,
-      pack: GameDataBlock.pack,
-      unpack: GameDataBlock.unpack,
     };
   },
 
@@ -54,8 +49,6 @@ export const GameDataBlock = {
         id: data.id,
         dataBlockType: data.dataBlockType,
         sceneList: data.sceneList,
-        pack: (self: GameDataBlock) => GameDataBlock.pack(self),
-        unpack: (data: object) => GameDataBlock.unpack(data),
       };
     })();
   },

@@ -36,10 +36,10 @@ export const ChannelEditorTabPanel: React.FC<ChannelEditorTabPanelProps> = ({
   ...props
 }) => {
   const { remove: removeDataBlock } = useDataBlockTable();
-  const { update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.is);
+  const { update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
   const { dataBlock: chatChannel, update: updateChatChannel } = useDataBlock(
     chatChannelDataBlockId,
-    ChatChannelDataBlock.is,
+    ChatChannelDataBlock.partialIs,
   );
 
   const {
