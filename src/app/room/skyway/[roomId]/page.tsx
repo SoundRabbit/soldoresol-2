@@ -1,10 +1,11 @@
 'use client';
 
-import { Box, Button, Flex, Grid, Stack, Text } from '@chakra-ui/react';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { SidePanelContent } from './SidePanelContent';
+
+import { Box, Button, Flex, Grid, Stack, Text } from '@chakra-ui/react';
+
 import { Input } from '@/component/common/Input';
 import { KeyValue } from '@/component/common/KeyValue';
 import { SidePanel } from '@/component/common/SidePanel';
@@ -17,6 +18,8 @@ import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageList
 import { GameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
 import { useDataBlockTable } from '@/hook/useDataBlock';
 import { bgColor, txColor } from '@/util/openColor';
+
+import { SidePanelContent } from './SidePanelContent';
 
 export const Page = () => {
   const { roomId } = useParams<{ roomId: string }>();

@@ -1,5 +1,7 @@
-import { Tab, TabProps } from '@chakra-ui/react';
 import React from 'react';
+
+import { Tab, TabProps } from '@chakra-ui/react';
+
 import { DataBlockId } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';

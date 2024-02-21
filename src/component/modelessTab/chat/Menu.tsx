@@ -1,8 +1,11 @@
-import { MenuDivider, MenuGroup, MenuItem, useDisclosure } from '@chakra-ui/react';
 import React from 'react';
-import { ChannelEditorModal } from './ChannelEditorModal';
+
+import { MenuDivider, MenuGroup, MenuItem, useDisclosure } from '@chakra-ui/react';
+
 import { ModelessMenuProps } from '@/component/modeless/Modeless';
 import { DataBlockId } from '@/dataBlock';
+
+import { ChannelEditorModal } from './ChannelEditorModal';
 
 export type MenuProps = ModelessMenuProps & {
   chatDataBlockId: DataBlockId;

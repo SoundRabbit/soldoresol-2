@@ -1,6 +1,7 @@
+import React, { useCallback, useState } from 'react';
+
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { Button, Flex, FlexProps } from '@chakra-ui/react';
-import React, { useCallback, useState } from 'react';
 
 export type SidePanelProps = FlexProps & {
   panelPposition: 'left' | 'right';
@@ -15,17 +16,17 @@ export const SidePanel: React.FC<SidePanelProps> = ({ panelPposition, children, 
 
   return (
     <Flex {...props}>
-      {panelPposition === 'right' ? (
+      {panelPposition === 'right' ?
         <Flex as={Button} height={'auto'} onClick={handleToggle}>
           <ChevronLeftIcon />
         </Flex>
-      ) : null}
+      : null}
       {isOpened ? children : null}
-      {panelPposition === 'left' ? (
+      {panelPposition === 'left' ?
         <Flex as={Button} height={'auto'} onClick={handleToggle}>
           <ChevronRightIcon />
         </Flex>
-      ) : null}
+      : null}
     </Flex>
   );
 };

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
+
 import { DataBlockId } from '@/dataBlock';
 import { useSetState } from '@/hook/useSetState';
 import { useTabIndex } from '@/hook/useTabIndex';
@@ -33,9 +34,9 @@ export const useSelectedChannelIdWithTabIndex = (tabId: string, channelIdList: D
 
   const selectedChannelId = useMemo(
     () =>
-      maybeSelectedChannelId !== DataBlockId.none
-        ? maybeSelectedChannelId
-        : channelIdList.at(tabIndex) ?? DataBlockId.none,
+      maybeSelectedChannelId !== DataBlockId.none ?
+        maybeSelectedChannelId
+      : channelIdList.at(tabIndex) ?? DataBlockId.none,
     [maybeSelectedChannelId, channelIdList, tabIndex],
   );
 

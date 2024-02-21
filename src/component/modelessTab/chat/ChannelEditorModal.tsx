@@ -1,3 +1,5 @@
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+
 import {
   Modal,
   ModalBody,
@@ -14,15 +16,16 @@ import {
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext, useDroppable } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ChannelEditorTabButton } from './ChannelEditorModal/ChannelEditorTabButton';
-import { ChannelEditorTabPanel } from './ChannelEditorModal/ChannelEditorTabPanel';
+
 import { DataBlockId } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
 import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/hook/useDataBlock';
 import { useTabIndex } from '@/hook/useTabIndex';
 import { bgColor, txColor } from '@/util/openColor';
+
+import { ChannelEditorTabButton } from './ChannelEditorModal/ChannelEditorTabButton';
+import { ChannelEditorTabPanel } from './ChannelEditorModal/ChannelEditorTabPanel';
 
 export type ChannelEditorModalProps = Omit<ModalProps, 'children'> & {
   chatDataBlockId: DataBlockId;

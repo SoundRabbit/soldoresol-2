@@ -1,12 +1,15 @@
+import React from 'react';
+
 import { ChatIcon } from '@chakra-ui/icons';
 import { Grid, Text } from '@chakra-ui/react';
-import React from 'react';
-import { useSelectedChannelId } from './useChatModelessTab';
+
 import { ModelessTab, ModelessTabProps } from '@/component/modeless/ModelessTab';
 import { DataBlockId } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
+
+import { useSelectedChannelId } from './useChatModelessTab';
 
 export type TabProps = ModelessTabProps & {
   chatDataBlockId: DataBlockId;

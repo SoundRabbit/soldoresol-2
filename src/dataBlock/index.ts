@@ -3,7 +3,7 @@ import * as t from 'io-ts';
 export type DataBlockId = string;
 
 export const DataBlockId = {
-  none: '',
+  none: '' as DataBlockId,
 };
 
 export type DataBlockType = string;

@@ -2,13 +2,12 @@ import { useCallback, useContext, useEffect, useMemo } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import useSWRInfinite, { unstable_serialize } from 'swr/infinite';
 import { v4 as uuidv4 } from 'uuid';
+
 import { DataBlockTableContext } from '@/context/DataBlockTable';
 import { AnnotDataBlock } from '@/context/DataBlockTable/annotDataBlock';
 import { DataBlock, DataBlockId } from '@/dataBlock';
 
-const SWR_KEY = 'local/dataBlock';
-
-const dataBlockSwrKey = (id: DataBlockId) => [SWR_KEY, id];
+const dataBlockSwrKey = (tableId: string, dataBlockId: DataBlockId) => [tableId, dataBlockId];
 
 export const useDataBlockTable = () => {
   const annotDataBlockTableRef = useContext(DataBlockTableContext);
@@ -31,14 +30,14 @@ export const useDataBlockTable = () => {
       const updateTimestamp = Date.now();
       const insertPosition = annotDataBlockTableRef.current.payload[dataBlock.id];
       const dataBlockId =
-        !!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp
-          ? uuidv4()
-          : dataBlock.id;
+        !!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp ?
+          uuidv4()
+        : dataBlock.id;
       const annotDataBlock = AnnotDataBlock.from(dataBlock, updateTimestamp, true);
 
       annotDataBlockTableRef.current.payload[dataBlockId] = annotDataBlock;
 
-      mutate(dataBlockSwrKey(dataBlockId));
+      mutate(dataBlockSwrKey(annotDataBlockTableRef.current.id, dataBlockId));
       for (const getKey of annotDataBlockTableRef.current.getKeyList) {
         mutate(unstable_serialize(getKey));
       }
@@ -55,13 +54,13 @@ export const useDataBlockTable = () => {
       const annotDataBlock = annotDataBlockTableRef.current.payload[dataBlockId];
       const updateTimestamp = Date.now();
 
-      if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
+      if (annotDataBlock === undefined || annotDataBlock.updateTimestamp > updateTimestamp) return;
 
       const newAnnotDataBlock = { ...annotDataBlock, isAvailable: false, updateTimestamp };
 
       annotDataBlockTableRef.current.payload[dataBlockId] = newAnnotDataBlock;
 
-      mutate(dataBlockSwrKey(dataBlockId));
+      mutate(dataBlockSwrKey(annotDataBlockTableRef.current.id, dataBlockId));
       for (const getKey of annotDataBlockTableRef.current.getKeyList) {
         mutate(unstable_serialize(getKey));
       }
@@ -78,7 +77,7 @@ export const useDataBlockTable = () => {
       const annotDataBlock = annotDataBlockTableRef.current.payload[dataBlockId];
       const updateTimestamp = Date.now();
 
-      if (annotDataBlock === undefined || annotDataBlock!.updateTimestamp > updateTimestamp) return;
+      if (annotDataBlock === undefined || annotDataBlock.updateTimestamp > updateTimestamp) return;
 
       const isAvailable = annotDataBlock.isAvailable;
       const newPyaload = await updateCallback(annotDataBlock.payload);
@@ -86,7 +85,7 @@ export const useDataBlockTable = () => {
 
       annotDataBlockTableRef.current.payload[dataBlockId] = newAnnotDataBlock;
 
-      mutate(dataBlockSwrKey(dataBlockId));
+      mutate(dataBlockSwrKey(annotDataBlockTableRef.current.id, dataBlockId));
       for (const getKey of annotDataBlockTableRef.current.getKeyList) {
         mutate(unstable_serialize(getKey));
       }
@@ -120,7 +119,7 @@ export const useDataBlock = <T extends DataBlock>(
   }, [annotDataBlockTableRef, dataBlockId]);
 
   const { update } = useDataBlockTable();
-  const { data } = useSWR(dataBlockSwrKey(dataBlockId), dataBlockFetcher);
+  const { data } = useSWR(dataBlockSwrKey(annotDataBlockTableRef?.current.id ?? '', dataBlockId), dataBlockFetcher);
 
   const bindedUpdate = useCallback(
     async (updateCallback: (dataBlock: T) => Promise<T>) => {
@@ -153,9 +152,9 @@ export const useDataBlockList = <T extends DataBlock>(
   const getKey = useCallback(
     (index: number) => {
       const dataBlockId = idList.at(index) ?? DataBlockId.none;
-      return dataBlockSwrKey(dataBlockId);
+      return dataBlockSwrKey(annotDataBlockTableRef?.current.id ?? '', dataBlockId);
     },
-    [idList],
+    [idList, annotDataBlockTableRef],
   );
 
   if (annotDataBlockTableRef && annotDataBlockTableRef.current.getKeyList.findIndex((item) => item === getKey) === -1) {

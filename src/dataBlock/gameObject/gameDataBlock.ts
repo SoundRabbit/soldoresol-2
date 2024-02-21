@@ -1,5 +1,6 @@
 import * as t from 'io-ts';
 import { v4 as uuidv4 } from 'uuid';
+
 import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Game';

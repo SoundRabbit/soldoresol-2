@@ -1,5 +1,6 @@
-import { Button, ButtonProps } from '@chakra-ui/react';
 import React, { useMemo } from 'react';
+
+import { Button, ButtonProps } from '@chakra-ui/react';
 
 export type ToggleButtonProps = ButtonProps & {
   isActive?: boolean;

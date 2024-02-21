@@ -1,5 +1,7 @@
-import { Box } from '@chakra-ui/react';
 import { Metadata } from 'next';
+
+import { Box } from '@chakra-ui/react';
+
 import { fonts } from './fonts';
 import { Providers } from './providers';
 import './style.css';

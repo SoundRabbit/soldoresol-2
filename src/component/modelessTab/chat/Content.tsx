@@ -1,9 +1,7 @@
-import { Box, FlexProps, Grid, IconButton, Stack, TabList, TabPanels, Tabs, Text } from '@chakra-ui/react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ChatChannelTabButton } from './Content/ChatChannelTabButton';
-import { ChatChannelTabPanel } from './Content/ChatChannelTabPanel';
-import { MessageTargetToggleButton } from './Content/MessageTargetToggleButton';
-import { useSelectedChannelIdWithTabIndex, useSelectedTargetChannelIdList } from './useChatModelessTab';
+
+import { Box, FlexProps, Grid, IconButton, Stack, TabList, TabPanels, Tabs, Text } from '@chakra-ui/react';
+
 import { Textarea } from '@/component/common/Textarea';
 import { PaperAirPlaneIcon } from '@/component/common/icon/PaperAirPlaneIcon';
 import { ModelessContentProps } from '@/component/modeless/Modeless';
@@ -14,6 +12,11 @@ import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBloc
 import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
 import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/hook/useDataBlock';
 import { bgColor, txColor } from '@/util/openColor';
+
+import { ChatChannelTabButton } from './Content/ChatChannelTabButton';
+import { ChatChannelTabPanel } from './Content/ChatChannelTabPanel';
+import { MessageTargetToggleButton } from './Content/MessageTargetToggleButton';
+import { useSelectedChannelIdWithTabIndex, useSelectedTargetChannelIdList } from './useChatModelessTab';
 
 export type ContentProps = FlexProps &
   ModelessContentProps & {
@@ -70,9 +73,9 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
   const handleToggleTargetChannel = useCallback(
     (isToggled: boolean, chatChannelDataBlockId: DataBlockId) => {
       setSelectedTargetChannelIdList((selectedTargetChannelIdList) =>
-        isToggled
-          ? [...selectedTargetChannelIdList, chatChannelDataBlockId]
-          : selectedTargetChannelIdList.filter((id) => id !== chatChannelDataBlockId),
+        isToggled ?
+          [...selectedTargetChannelIdList, chatChannelDataBlockId]
+        : selectedTargetChannelIdList.filter((id) => id !== chatChannelDataBlockId),
       );
     },
     [setSelectedTargetChannelIdList],

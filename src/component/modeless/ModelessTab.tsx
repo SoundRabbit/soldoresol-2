@@ -1,6 +1,8 @@
-import { Box, BoxProps, Flex } from '@chakra-ui/react';
 import * as t from 'io-ts';
 import React, { useCallback, useMemo } from 'react';
+
+import { Box, BoxProps, Flex } from '@chakra-ui/react';
+
 import { expect } from '@/util/expect';
 import { bgColor, txColor } from '@/util/openColor';
 

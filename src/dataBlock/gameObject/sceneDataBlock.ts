@@ -1,4 +1,5 @@
 import * as t from 'io-ts';
+
 import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Scene';

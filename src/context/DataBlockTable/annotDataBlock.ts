@@ -1,4 +1,5 @@
 import * as t from 'io-ts';
+
 import { DataBlock, PackedDataBlock } from '@/dataBlock';
 import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';

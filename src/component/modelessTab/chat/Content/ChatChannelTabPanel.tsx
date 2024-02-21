@@ -1,11 +1,14 @@
-import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
 import React, { useRef } from 'react';
-import { ChatChannelTabPanelDescription } from './ChatChannelTabPanelDescription';
-import { ChatChannelTabPanelMessage } from './ChatChannelTabPanelMessage';
+
+import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
+
 import { DataBlockId } from '@/dataBlock';
 import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 import { bgColor, txColor } from '@/util/openColor';
+
+import { ChatChannelTabPanelDescription } from './ChatChannelTabPanelDescription';
+import { ChatChannelTabPanelMessage } from './ChatChannelTabPanelMessage';
 
 export type ChatChannelTabPanelProps = TabPanelProps & {
   chatMessageListDataBlockId: DataBlockId;

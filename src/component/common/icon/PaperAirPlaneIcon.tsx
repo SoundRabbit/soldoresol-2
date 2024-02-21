@@ -1,5 +1,6 @@
-import { Icon, IconProps } from '@chakra-ui/react';
 import React from 'react';
+
+import { Icon, IconProps } from '@chakra-ui/react';
 
 export type PaperAirPlaneIconProps = IconProps & {
   color?: string;

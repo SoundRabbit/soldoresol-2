@@ -1,5 +1,7 @@
-import { Input as ChakraInput, InputProps as ChakraInputProps } from '@chakra-ui/react';
 import React from 'react';
+
+import { Input as ChakraInput, InputProps as ChakraInputProps } from '@chakra-ui/react';
+
 import { bgColor, txColor } from '@/util/openColor';
 
 export type InputProps = ChakraInputProps;
