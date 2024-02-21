@@ -1,5 +1,4 @@
 import * as t from 'io-ts';
-import { Assign, Subtract } from 'utility-types';
 
 import { DataBlockId } from './dataBlockId';
 import { DataBlockType } from './dataBlockType';
@@ -34,4 +33,5 @@ export type DiffOf<T> =
   T extends object ? { [K in keyof T]: DiffOf<T[K]> }
   : ({ type: 'ref' } | { type: 'remove' } | { type: 'replace'; value: T }) & { defaultValue: T };
 
-export type RefOf<T extends DataBlock> = Assign<DataBlock, { prefab?: DataBlockId }, DiffOf<Subtract<T, DataBlock>>>;
+export type RefOf<T extends DataBlock> = Pick<T, keyof DataBlock> &
+  DiffOf<Omit<T, keyof DataBlock>> & { prefab?: DataBlockId };
