@@ -1,15 +1,24 @@
 import * as t from 'io-ts';
 import { Assign } from 'utility-types';
+import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, PackedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Scene';
 
-export type SceneDataBlock = Assign<DataBlock, { dataBlockType: typeof dataBlockType; name: string }>;
+export type SceneDataBlock = Assign<
+  DataBlock,
+  { dataBlockType: typeof dataBlockType; name: string; mainTable: DataBlockId; tableList: DataBlockId[] }
+>;
 
 export const PackedSceneDataBlock = t.intersection([
   PackedDataBlock,
-  t.type({ dataBlockType: t.literal(dataBlockType), name: t.string }),
+  t.type({
+    dataBlockType: t.literal(dataBlockType),
+    name: t.string,
+    mainTable: DataBlockId,
+    tableList: t.array(DataBlockId),
+  }),
 ]);
 
 export type PackedSceneDataBlock = t.TypeOf<typeof PackedSceneDataBlock>;
@@ -21,13 +30,17 @@ export const SceneDataBlock = {
     return typeof data === 'object' && data.dataBlockType === dataBlockType;
   },
 
-  create(props?: Partial<SceneDataBlock>): SceneDataBlock {
-    const id = props?.id ?? '';
-    const name = props?.name ?? '';
+  create(props: { mainTable: DataBlockId }, option?: Partial<SceneDataBlock>): SceneDataBlock {
+    const id = option?.id ?? uuidv4();
+    const mainTable = option?.mainTable ?? props.mainTable;
+    const name = option?.name ?? '';
+    const tableList = option?.tableList ?? [];
     return {
       id,
-      dataBlockType,
+      dataBlockType: dataBlockType,
+      mainTable,
       name,
+      tableList,
     };
   },
 
@@ -37,6 +50,8 @@ export const SceneDataBlock = {
         id: self.id,
         dataBlockType: self.dataBlockType,
         name: self.name,
+        mainTable: self.mainTable,
+        tableList: self.tableList,
       };
     })();
   },
@@ -48,6 +63,8 @@ export const SceneDataBlock = {
         id: data.id,
         dataBlockType: data.dataBlockType,
         name: data.name,
+        mainTable: data.mainTable,
+        tableList: data.tableList,
       };
     })();
   },

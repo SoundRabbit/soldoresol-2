@@ -198,8 +198,8 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
             borderRadius={0}
             padding={0}
             placeholder={`${selectedChannel ? `#${selectedChannel.name}` : ''} ${selectedTargetChannelList
-              .filter((channel) => ChatChannelDataBlock.is(channel) && channel.id !== selectedChannel?.id)
-              .map((channel) => ChatChannelDataBlock.is(channel) && `#${channel.name}`)
+              .filter((channel) => ChatChannelDataBlock.partialIs(channel) && channel.id !== selectedChannel?.id)
+              .map((channel) => ChatChannelDataBlock.partialIs(channel) && `#${channel.name}`)
               .join(' ')} にメッセージを送信`}
           />
           <Stack direction={'row'} spacing={'2ch'} fontSize={'0.7rem'}>

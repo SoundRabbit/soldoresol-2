@@ -2,11 +2,11 @@ import * as t from 'io-ts';
 import { Assign } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, PackedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
 
 export const dataBlockType = 'Game';
 
-export type GameDataBlock = Assign<DataBlock, { dataBlockType: typeof dataBlockType; sceneList: string[] }>;
+export type GameDataBlock = Assign<DataBlock, { dataBlockType: typeof dataBlockType; sceneList: DataBlockId[] }>;
 
 export const PackedGameDataBlock = t.intersection([
   PackedDataBlock,
