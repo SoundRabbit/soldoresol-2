@@ -1,60 +1,57 @@
+'use client';
+
 import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ModelessContentProps, ModelessMenuProps, ModelessTabProps } from '@/component/modeless/Modeless';
 import { ModelessContainerController } from '@/component/modeless/ModelessContainer';
 import { ChatModelessContent, ChatModelessMenu, ChatModelessTab } from '@/component/modelessTab/chat';
-import { DataBlock, DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
-import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
-import { GameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
 import { useDataBlockTable } from '@/hook/useDataBlock';
-import { Maybe } from '@/util/utilityTypes';
+import { DataBlock, DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/libs/dataBlock/chatObject/chatDataBlock';
+import { ChatMessageListDataBlock } from '@/libs/dataBlock/chatObject/chatMessageListDataBlock';
+import { GameDataBlock } from '@/libs/dataBlock/gameObject/gameDataBlock';
+import { Maybe } from '@/utils/utilityTypes';
 
 const useInitialDataBlock = ({
   gameDataBlockId,
   chatDataBlockId,
-  isExistDataBlock,
-  addDataBlock,
+  setDataBlock,
 }: {
   gameDataBlockId: DataBlockId;
   chatDataBlockId: DataBlockId;
-  isExistDataBlock: (id: DataBlockId) => boolean;
-  addDataBlock: (dataBlock: DataBlock) => void;
+  setDataBlock: (dataBlock: DataBlock) => void;
 }) => {
   useEffect(() => {
-    if (!isExistDataBlock(gameDataBlockId)) {
-      const defaultGameDataBlock = GameDataBlock.create({ id: gameDataBlockId });
-      addDataBlock(defaultGameDataBlock);
-    }
-    if (!isExistDataBlock(chatDataBlockId)) {
-      const chatChannelDescription = [
-        'チャットタブの追加 / 削除 / 編集方法',
-        'ウィンドウ右上の「≡」（ハンバーガーメニュー）から「チャットタブを編集」を選択してください。',
-      ].join('\n');
-      const defaultChatChannelDataBlocks = [
-        ChatChannelDataBlock.create({ name: 'メイン', description: chatChannelDescription }),
-        ChatChannelDataBlock.create({ name: '情報' }),
-        ChatChannelDataBlock.create({ name: '雑談' }),
-      ];
-      const defualtChatMessageListDataBlock = ChatMessageListDataBlock.create();
-      const defaultChatDataBlock = ChatDataBlock.create(
-        { messageList: defualtChatMessageListDataBlock.id },
-        {
-          id: chatDataBlockId,
-          channelList: defaultChatChannelDataBlocks.map((channel) => channel.id),
-        },
-      );
+    const defaultGameDataBlock = GameDataBlock.create({ id: gameDataBlockId });
+    setDataBlock(defaultGameDataBlock);
 
-      for (const channel of defaultChatChannelDataBlocks) {
-        addDataBlock(channel);
-      }
+    const chatChannelDescription = [
+      'チャットタブの追加 / 削除 / 編集方法',
+      'ウィンドウ右上の「≡」（ハンバーガーメニュー）から「チャットタブを編集」を選択してください。',
+    ].join('\n');
+    const defaultChatChannelDataBlocks = [
+      ChatChannelDataBlock.create({ name: 'メイン', description: chatChannelDescription }),
+      ChatChannelDataBlock.create({ name: '情報' }),
+      ChatChannelDataBlock.create({ name: '雑談' }),
+    ];
+    const defualtChatMessageListDataBlock = ChatMessageListDataBlock.create();
+    const defaultChatDataBlock = ChatDataBlock.create(
+      { messageList: defualtChatMessageListDataBlock.id },
+      {
+        id: chatDataBlockId,
+        channelList: defaultChatChannelDataBlocks.map((channel) => channel.id),
+      },
+    );
 
-      addDataBlock(defualtChatMessageListDataBlock);
-      addDataBlock(defaultChatDataBlock);
+    for (const channel of defaultChatChannelDataBlocks) {
+      setDataBlock(channel);
     }
-  }, [isExistDataBlock, addDataBlock, gameDataBlockId, chatDataBlockId]);
+
+    setDataBlock(defualtChatMessageListDataBlock);
+    setDataBlock(defaultChatDataBlock);
+  }, [setDataBlock, gameDataBlockId, chatDataBlockId]);
 };
 
 const useOpenChatModeless = (
@@ -107,13 +104,13 @@ const useOpenChatModeless = (
 };
 
 export const useRoom = (gameDataBlockId: DataBlockId, chatDataBlockId: DataBlockId) => {
-  const { isExist: isExistDataBlock, add: addDataBlock } = useDataBlockTable();
+  const { set: setDataBlock } = useDataBlockTable();
 
   const modelessContainerControllerRef = useRef<Maybe<ModelessContainerController, null>>(null);
 
   const openChatModeless = useOpenChatModeless(chatDataBlockId, modelessContainerControllerRef);
 
-  useInitialDataBlock({ gameDataBlockId, chatDataBlockId, isExistDataBlock, addDataBlock });
+  useInitialDataBlock({ gameDataBlockId, chatDataBlockId, setDataBlock });
 
   return { openChatModeless, modelessContainerControllerRef };
 };

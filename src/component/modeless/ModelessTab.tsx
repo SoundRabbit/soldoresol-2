@@ -3,8 +3,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import { Box, BoxProps, Flex } from '@chakra-ui/react';
 
-import { expect } from '@/util/expect';
-import { bgColor, txColor } from '@/util/openColor';
+import { expect } from '@/utils/expect';
+import { bgColor, txColor } from '@/utils/openColor';
 
 export type OnMoveTab = (srcModelessId: string, dstModelessId: string, srcTabId: string, dstTabIndex: number) => void;
 

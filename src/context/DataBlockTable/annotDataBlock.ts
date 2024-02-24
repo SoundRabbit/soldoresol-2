@@ -1,13 +1,13 @@
 import * as t from 'io-ts';
 
-import { DataBlock, PackedDataBlock, pack as packDataBlock } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
-import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
-import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
-import { GameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
-import { SceneDataBlock } from '@/dataBlock/gameObject/sceneDataBlock';
-import { ImageDataBlock } from '@/dataBlock/resourceObject/imageDataBlock';
+import { DataBlock, PackedDataBlock, pack as packDataBlock } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/libs/dataBlock/chatObject/chatDataBlock';
+import { ChatMessageDataBlock } from '@/libs/dataBlock/chatObject/chatMessageDataBlock';
+import { ChatMessageListDataBlock } from '@/libs/dataBlock/chatObject/chatMessageListDataBlock';
+import { GameDataBlock } from '@/libs/dataBlock/gameObject/gameDataBlock';
+import { SceneDataBlock } from '@/libs/dataBlock/gameObject/sceneDataBlock';
+import { ImageDataBlock } from '@/libs/dataBlock/resourceObject/imageDataBlock';
 
 export type AnnotDataBlock = {
   payload: DataBlock;

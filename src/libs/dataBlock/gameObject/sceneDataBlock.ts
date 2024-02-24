@@ -1,8 +1,7 @@
 import * as t from 'io-ts';
 import { Assign } from 'utility-types';
-import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/libs/dataBlock';
 
 export const dataBlockType = 'Scene';
 
@@ -31,7 +30,7 @@ export const SceneDataBlock = {
   },
 
   create(props: { mainTable: DataBlockId }, option?: Partial<SceneDataBlock>): SceneDataBlock {
-    const id = option?.id ?? uuidv4();
+    const id = option?.id ?? DataBlockId.create();
     const mainTable = option?.mainTable ?? props.mainTable;
     const name = option?.name ?? '';
     const tableList = option?.tableList ?? [];

@@ -1,15 +1,16 @@
-import React, { MutableRefObject, useMemo, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+'use client';
 
-import { DataBlockId } from '@/dataBlock';
+import React, { MutableRefObject, useMemo, useRef } from 'react';
+
+import { DataBlockId } from '@/libs/dataBlock';
+import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 
 import { AnnotDataBlock } from './DataBlockTable/annotDataBlock';
 
 export type DataBlockTable = Record<DataBlockId, AnnotDataBlock | undefined>;
 
 export type AnnotDataBlockTable = {
-  payload: DataBlockTable;
-  id: string;
+  channel: DataBlockTableChannel;
   getKeyList: ((index: number) => any)[];
 };
 
@@ -20,12 +21,14 @@ export type DataBlockTableProviderProps = {
 };
 
 export const DataBlockTableProvider: React.FC<DataBlockTableProviderProps> = ({ children }) => {
-  const tableId = useMemo(() => uuidv4(), []);
+  const channel = useMemo(() => {
+    const channel = new DataBlockTableChannel();
+    return channel;
+  }, []);
 
   const dataBlockTableRef = useRef<AnnotDataBlockTable>({
-    payload: {},
-    id: tableId,
     getKeyList: [],
+    channel,
   });
 
   return <DataBlockTableContext.Provider value={dataBlockTableRef}>{children}</DataBlockTableContext.Provider>;

@@ -1,8 +1,7 @@
 import * as t from 'io-ts';
 import { Assign } from 'utility-types';
-import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/libs/dataBlock';
 
 export const dataBlockType = 'Chat';
 
@@ -30,7 +29,7 @@ export const ChatDataBlock = {
   },
 
   create(props: { messageList: DataBlockId }, options?: Partial<ChatDataBlock>): ChatDataBlock {
-    const id = options?.id ?? uuidv4();
+    const id = options?.id ?? DataBlockId.create();
     const messageList = options?.messageList ?? props.messageList;
     const channelList = options?.channelList ?? [];
 

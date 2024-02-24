@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Textarea as ChakraTextarea, TextareaProps as ChakraTextareaProps } from '@chakra-ui/react';
 
-import { bgColor, txColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/utils/openColor';
 
 export type TextareaProps = ChakraTextareaProps;
 

@@ -1,11 +1,11 @@
-import { DataBlock, PackedDataBlock } from '@/dataBlock';
-
 import { ChatChannelDataBlock } from './chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from './chatObject/chatDataBlock';
 import { ChatMessageDataBlock } from './chatObject/chatMessageDataBlock';
 import { ChatMessageListDataBlock } from './chatObject/chatMessageListDataBlock';
+import { DataBlock } from './dataBlock';
 import { GameDataBlock } from './gameObject/gameDataBlock';
 import { SceneDataBlock } from './gameObject/sceneDataBlock';
+import { PackedDataBlock } from './packedDataBlock';
 import { ImageDataBlock } from './resourceObject/imageDataBlock';
 
 export const pack = async (self: DataBlock): Promise<PackedDataBlock | undefined> => {

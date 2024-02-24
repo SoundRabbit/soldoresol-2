@@ -3,12 +3,12 @@ import React, { useCallback, useMemo } from 'react';
 import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
 
 import { Button } from '@/component/common/Button';
-import { DataBlockId } from '@/dataBlock';
-import { GameDataBlock } from '@/dataBlock/gameObject/gameDataBlock';
-import { SceneDataBlock } from '@/dataBlock/gameObject/sceneDataBlock';
-import { TableDataBlock } from '@/dataBlock/gameObject/tableDataBlock';
 import { useDataBlock, useDataBlockTable } from '@/hook/useDataBlock';
-import { NonChildren } from '@/util/utilityTypes';
+import { DataBlockId } from '@/libs/dataBlock';
+import { GameDataBlock } from '@/libs/dataBlock/gameObject/gameDataBlock';
+import { SceneDataBlock } from '@/libs/dataBlock/gameObject/sceneDataBlock';
+import { TableDataBlock } from '@/libs/dataBlock/gameObject/tableDataBlock';
+import { NonChildren } from '@/utils/utilityTypes';
 
 import { SceneListItem } from './SceneTabPanel/SceneListItem';
 
@@ -17,24 +17,24 @@ export type SceneTabPanelProps = NonChildren<TabPanelProps> & {
 };
 
 export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, ...props }) => {
-  const { add: addDataBlock } = useDataBlockTable();
-  const { dataBlock: game, update: updateGame } = useDataBlock(gameDataBlockId, GameDataBlock.partialIs);
+  const { set: setDataBlock } = useDataBlockTable();
+  const { dataBlock: game, set: setGame } = useDataBlock(gameDataBlockId, GameDataBlock.partialIs);
 
-  const handleAddScene = useCallback(() => {
+  const handleAddScene = useCallback(async () => {
     const mainTable = TableDataBlock.create({ name: '新しいテーブル' });
-    const mainTableId = addDataBlock(mainTable);
+    const mainTableId = await setDataBlock(mainTable);
     if (mainTableId === undefined) return;
 
     const scene = SceneDataBlock.create({ mainTable: mainTableId }, { name: '新しいシーン' });
 
-    const sceneId = addDataBlock(scene);
+    const sceneId = await setDataBlock(scene);
     if (sceneId === undefined) return;
 
-    updateGame(async (game) => {
+    setGame(async (game) => {
       const sceneList = [...game.sceneList, sceneId];
       return { ...game, sceneList };
     });
-  }, [addDataBlock, updateGame]);
+  }, [setDataBlock, setGame]);
   const sceneIdList = useMemo(() => game?.sceneList ?? [], [game]);
 
   return (

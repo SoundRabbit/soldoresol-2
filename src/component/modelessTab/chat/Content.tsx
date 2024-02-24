@@ -5,13 +5,13 @@ import { Box, FlexProps, Grid, IconButton, Stack, TabList, TabPanels, Tabs, Text
 import { Textarea } from '@/component/common/Textarea';
 import { PaperAirPlaneIcon } from '@/component/common/icon/PaperAirPlaneIcon';
 import { ModelessContentProps } from '@/component/modeless/Modeless';
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
-import { ChatMessageDataBlock } from '@/dataBlock/chatObject/chatMessageDataBlock';
-import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
 import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/hook/useDataBlock';
-import { bgColor, txColor } from '@/util/openColor';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/libs/dataBlock/chatObject/chatDataBlock';
+import { ChatMessageDataBlock } from '@/libs/dataBlock/chatObject/chatMessageDataBlock';
+import { ChatMessageListDataBlock } from '@/libs/dataBlock/chatObject/chatMessageListDataBlock';
+import { bgColor, txColor } from '@/utils/openColor';
 
 import { ChatChannelTabButton } from './Content/ChatChannelTabButton';
 import { ChatChannelTabPanel } from './Content/ChatChannelTabPanel';
@@ -24,9 +24,9 @@ export type ContentProps = FlexProps &
   };
 
 export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
-  const { add: addDataBlock } = useDataBlockTable();
+  const { set: setDataBlock } = useDataBlockTable();
   const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
-  const { update: updateMessageList } = useDataBlock(
+  const { set: setMessageList } = useDataBlock(
     chat?.messageList ?? DataBlockId.none,
     ChatMessageListDataBlock.partialIs,
   );
@@ -85,14 +85,16 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
     setChatMessage(e.currentTarget.value);
   }, []);
 
-  const handleSendChatMessage = useCallback(() => {
+  const handleSendChatMessage = useCallback(async () => {
     if (selectedChannel) {
-      updateMessageList(async (messageListDataBlock) => {
-        const newMessage = ChatMessageDataBlock.create({
-          originalMessage: chatMessage,
-          filterChannelList: [selectedChannel.id, ...selectedTargetChannelIdList],
-        });
-        const messageId = addDataBlock(newMessage);
+      const newMessage = ChatMessageDataBlock.create({
+        originalMessage: chatMessage,
+        filterChannelList: [selectedChannel.id, ...selectedTargetChannelIdList],
+      });
+
+      const messageId = await setDataBlock(newMessage);
+
+      await setMessageList(async (messageListDataBlock) => {
         if (messageId) {
           const newMessageList = [...messageListDataBlock.messageList, messageId];
           return { ...messageListDataBlock, messageList: newMessageList };
@@ -103,7 +105,7 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
       setChatMessage('');
       setChatMessageKey((prevKey) => prevKey + 1);
     }
-  }, [selectedChannel, updateMessageList, chatMessage, selectedTargetChannelIdList, addDataBlock]);
+  }, [setDataBlock, setMessageList, chatMessage, selectedTargetChannelIdList, selectedChannel]);
 
   const handleKeyDownInTextarea = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

@@ -4,10 +4,10 @@ import { Box, BoxProps, Collapse, Flex, FlexProps, Grid, GridProps, Text } from 
 
 import { ChevronDownIcon } from '@/component/common/icon/ChevronDownIcon';
 import { ChevronUpIcon } from '@/component/common/icon/ChevronUpIcon';
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
 import { useRefState } from '@/hook/useRefState';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
 
 export type ChatChannelTabPanelDescriptionProps = Omit<FlexProps, 'children'> & {
   chatChannelDataBlockId: DataBlockId;

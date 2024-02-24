@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Button as ChakraButton, ButtonProps as ChakraButtonProps } from '@chakra-ui/react';
 
-import { bgColor, txColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/utils/openColor';
 
 type BaseProps = ChakraButtonProps;
 

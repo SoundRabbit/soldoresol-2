@@ -2,10 +2,10 @@ import React, { useRef } from 'react';
 
 import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
 
-import { DataBlockId } from '@/dataBlock';
-import { ChatMessageListDataBlock } from '@/dataBlock/chatObject/chatMessageListDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
-import { bgColor, txColor } from '@/util/openColor';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatMessageListDataBlock } from '@/libs/dataBlock/chatObject/chatMessageListDataBlock';
+import { bgColor, txColor } from '@/utils/openColor';
 
 import { ChatChannelTabPanelDescription } from './ChatChannelTabPanelDescription';
 import { ChatChannelTabPanelMessage } from './ChatChannelTabPanelMessage';

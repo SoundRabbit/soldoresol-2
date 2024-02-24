@@ -1,4 +1,5 @@
 import * as t from 'io-ts';
+import { v4 as uuidv4 } from 'uuid';
 
 const $DataBlockId = t.string;
 
@@ -6,6 +7,9 @@ export type DataBlockId = t.TypeOf<typeof $DataBlockId>;
 
 export const DataBlockId = Object.assign(t.string, {
   none: '' as DataBlockId,
+  create(): DataBlockId {
+    return uuidv4();
+  },
 });
 
 const $DataBlockType = t.string;

@@ -2,9 +2,9 @@ import React from 'react';
 
 import { Tab, TabProps } from '@chakra-ui/react';
 
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
 
 export type ChatChannelTabButtonProps = TabProps & {
   chatChanneDataBlocklId: DataBlockId;

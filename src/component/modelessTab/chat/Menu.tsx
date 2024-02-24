@@ -3,7 +3,7 @@ import React from 'react';
 import { MenuDivider, MenuGroup, MenuItem, useDisclosure } from '@chakra-ui/react';
 
 import { ModelessMenuProps } from '@/component/modeless/Modeless';
-import { DataBlockId } from '@/dataBlock';
+import { DataBlockId } from '@/libs/dataBlock';
 
 import { ChannelEditorModal } from './ChannelEditorModal';
 

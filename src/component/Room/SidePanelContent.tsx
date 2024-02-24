@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Tab, TabList, TabPanels, Tabs } from '@chakra-ui/react';
 
-import { DataBlockId } from '@/dataBlock';
+import { DataBlockId } from '@/libs/dataBlock';
 
 import { SceneTabPanel } from './SidePanelContent/SceneTabPanel';
 

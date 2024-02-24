@@ -1,7 +1,6 @@
 import { Assign } from 'utility-types';
-import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, RefOf } from '@/dataBlock';
+import { DataBlock, DataBlockId, RefOf } from '@/libs/dataBlock';
 
 export const dataBlockType = 'Table';
 export const refDataBlockType = 'RefTable';
@@ -16,7 +15,7 @@ export const TableDataBlock = {
   },
 
   create(option?: Partial<TableDataBlock>): TableDataBlock {
-    const id = option?.id ?? uuidv4();
+    const id = option?.id ?? DataBlockId.create();
     const name = option?.name ?? '';
     return {
       id,

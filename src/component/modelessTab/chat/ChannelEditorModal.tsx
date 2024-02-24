@@ -17,12 +17,12 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext, useDroppable } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
 
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
 import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/hook/useDataBlock';
 import { useTabIndex } from '@/hook/useTabIndex';
-import { bgColor, txColor } from '@/util/openColor';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/libs/dataBlock/chatObject/chatDataBlock';
+import { bgColor, txColor } from '@/utils/openColor';
 
 import { ChannelEditorTabButton } from './ChannelEditorModal/ChannelEditorTabButton';
 import { ChannelEditorTabPanel } from './ChannelEditorModal/ChannelEditorTabPanel';
@@ -38,8 +38,8 @@ export const ChannelEditorModal: React.FC<ChannelEditorModalProps> = ({
   onClose,
   ...props
 }) => {
-  const { add: addDataBlock } = useDataBlockTable();
-  const { dataBlock: chat, update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
+  const { set: setDataBlock } = useDataBlockTable();
+  const { dataBlock: chat, set: setChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
   const chatChannelIdList = useMemo(() => chat?.channelList ?? [], [chat]);
   const chatChannelIdListRef = useRef<string[]>([]);
   chatChannelIdListRef.current = chatChannelIdList;
@@ -56,19 +56,19 @@ export const ChannelEditorModal: React.FC<ChannelEditorModalProps> = ({
   });
 
   const handleChangeTab = useCallback(
-    (index: number) => {
+    async (index: number) => {
       if (index === chatChannelListLengthRef.current) {
         const channelDataBlock = ChatChannelDataBlock.create({ name: '新しいタブ' });
-        addDataBlock(channelDataBlock);
-        updateChat(async (chat) => ({ ...chat, channelList: [...chat.channelList, channelDataBlock.id] }));
+        await setDataBlock(channelDataBlock);
+        setChat(async (chat) => ({ ...chat, channelList: [...chat.channelList, channelDataBlock.id] }));
       }
       setSelectedChannelId(chatChannelIdListRef.current.at(index) ?? DataBlockId.none);
     },
-    [addDataBlock, updateChat],
+    [setDataBlock, setChat],
   );
 
   const handleDropChannel = useCallback(
-    (event: DragEndEvent) => {
+    async (event: DragEndEvent) => {
       const { over, active } = event;
       if (over?.id === active.id) {
         return;
@@ -80,9 +80,9 @@ export const ChannelEditorModal: React.FC<ChannelEditorModalProps> = ({
         return;
       }
       newChannelList.splice(overIndex, 0, newChannelList.splice(activeIndex, 1)[0]);
-      updateChat(async (chat) => ({ ...chat, channelList: newChannelList.map((channel) => channel.id) }));
+      await setChat(async (chat) => ({ ...chat, channelList: newChannelList.map((channel) => channel.id) }));
     },
-    [chatChannelList, updateChat],
+    [chatChannelList, setChat],
   );
 
   return (

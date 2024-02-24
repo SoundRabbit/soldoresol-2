@@ -17,11 +17,11 @@ import {
 import { Button } from '@/component/common/Button';
 import { Input } from '@/component/common/Input';
 import { Textarea } from '@/component/common/Textarea';
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
 import { useDataBlock, useDataBlockTable } from '@/hook/useDataBlock';
-import { bgColor, txColor } from '@/util/openColor';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/libs/dataBlock/chatObject/chatDataBlock';
+import { bgColor, txColor } from '@/utils/openColor';
 
 type InputableElement = HTMLInputElement | HTMLTextAreaElement;
 
@@ -36,8 +36,8 @@ export const ChannelEditorTabPanel: React.FC<ChannelEditorTabPanelProps> = ({
   ...props
 }) => {
   const { remove: removeDataBlock } = useDataBlockTable();
-  const { update: updateChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
-  const { dataBlock: chatChannel, update: updateChatChannel } = useDataBlock(
+  const { set: setChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
+  const { dataBlock: chatChannel, set: setChatChannel } = useDataBlock(
     chatChannelDataBlockId,
     ChatChannelDataBlock.partialIs,
   );
@@ -51,31 +51,31 @@ export const ChannelEditorTabPanel: React.FC<ChannelEditorTabPanelProps> = ({
   const handleInputChatChannelName = useCallback(
     (e: React.ChangeEvent<InputableElement>) => {
       const name = e.currentTarget.value;
-      updateChatChannel(async (chatChannel) => {
+      setChatChannel(async (chatChannel) => {
         return { ...chatChannel, name };
       });
     },
-    [updateChatChannel],
+    [setChatChannel],
   );
 
   const handleInputChatChannelDescription = useCallback(
     (e: React.ChangeEvent<InputableElement>) => {
       const description = e.currentTarget.value;
-      updateChatChannel(async (chatChannel) => {
+      setChatChannel(async (chatChannel) => {
         return { ...chatChannel, description };
       });
     },
-    [updateChatChannel],
+    [setChatChannel],
   );
 
   const handleRemoveChatChannel = useCallback(() => {
-    updateChat(async (chat) => {
+    setChat(async (chat) => {
       const channelList = chat.channelList.filter((id) => id !== chatChannelDataBlockId);
       return { ...chat, channelList };
     });
     removeDataBlock(chatChannelDataBlockId);
     closeConfirmDeleteChannelModal();
-  }, [updateChat, chatChannelDataBlockId, removeDataBlock, closeConfirmDeleteChannelModal]);
+  }, [setChat, chatChannelDataBlockId, removeDataBlock, closeConfirmDeleteChannelModal]);
 
   return (
     <>

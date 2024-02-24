@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
 
-import { DataBlockId } from '@/dataBlock';
 import { useSetState } from '@/hook/useSetState';
 import { useTabIndex } from '@/hook/useTabIndex';
+import { DataBlockId } from '@/libs/dataBlock';
 
 const SWR_KEY = 'local/modelessTab';
 

@@ -1,108 +1,68 @@
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+'use client';
+
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import useSWRInfinite, { unstable_serialize } from 'swr/infinite';
-import { v4 as uuidv4 } from 'uuid';
 
 import { DataBlockTableContext } from '@/context/DataBlockTable';
-import { AnnotDataBlock } from '@/context/DataBlockTable/annotDataBlock';
-import { DataBlock, DataBlockId } from '@/dataBlock';
+import { RoomContext } from '@/context/RoomContext';
+import { DataBlock, DataBlockId } from '@/libs/dataBlock';
 
-const dataBlockSwrKey = (tableId: string, dataBlockId: DataBlockId) => [tableId, dataBlockId];
+const dataBlockSwrKey = (roomId: string, dataBlockId: DataBlockId) => [roomId, dataBlockId];
 
 export const useDataBlockTable = () => {
   const annotDataBlockTableRef = useContext(DataBlockTableContext);
+  const { roomId } = useContext(RoomContext);
 
   const { mutate } = useSWRConfig();
 
-  const isExist = useCallback(
-    (id?: DataBlockId) => {
-      if (!annotDataBlockTableRef || !id) return false;
-
-      return annotDataBlockTableRef.current.payload[id] !== undefined;
-    },
-    [annotDataBlockTableRef],
-  );
-
-  const add = useCallback(
-    (dataBlock: DataBlock) => {
+  const get = useCallback(
+    async <T extends DataBlock>(dataBlockId: DataBlockId, typeChecker: (data: DataBlock) => data is T) => {
       if (!annotDataBlockTableRef) return;
 
-      const updateTimestamp = Date.now();
-      const insertPosition = annotDataBlockTableRef.current.payload[dataBlock.id];
-      const dataBlockId =
-        !!insertPosition && insertPosition.isAvailable && insertPosition.updateTimestamp > updateTimestamp ?
-          uuidv4()
-        : dataBlock.id;
-      const annotDataBlock = AnnotDataBlock.from(dataBlock, updateTimestamp, true);
+      return await annotDataBlockTableRef.current.channel.get(roomId, dataBlockId, typeChecker);
+    },
+    [annotDataBlockTableRef, roomId],
+  );
 
-      annotDataBlockTableRef.current.payload[dataBlockId] = annotDataBlock;
+  const set = useCallback(
+    async (dataBlock: DataBlock) => {
+      if (!annotDataBlockTableRef) return;
 
-      mutate(dataBlockSwrKey(annotDataBlockTableRef.current.id, dataBlockId));
+      await annotDataBlockTableRef.current.channel.set(roomId, dataBlock.id, dataBlock);
+      mutate(dataBlockSwrKey(roomId, dataBlock.id));
       for (const getKey of annotDataBlockTableRef.current.getKeyList) {
         mutate(unstable_serialize(getKey));
       }
 
-      return dataBlockId;
+      return dataBlock.id;
     },
-    [annotDataBlockTableRef, mutate],
+    [annotDataBlockTableRef, roomId, mutate],
   );
 
   const remove = useCallback(
     (dataBlockId: DataBlockId) => {
       if (!annotDataBlockTableRef) return;
 
-      const annotDataBlock = annotDataBlockTableRef.current.payload[dataBlockId];
-      const updateTimestamp = Date.now();
+      annotDataBlockTableRef.current.channel.remove(roomId, dataBlockId);
 
-      if (annotDataBlock === undefined || annotDataBlock.updateTimestamp > updateTimestamp) return;
-
-      const newAnnotDataBlock = { ...annotDataBlock, isAvailable: false, updateTimestamp };
-
-      annotDataBlockTableRef.current.payload[dataBlockId] = newAnnotDataBlock;
-
-      mutate(dataBlockSwrKey(annotDataBlockTableRef.current.id, dataBlockId));
+      mutate(dataBlockSwrKey(roomId, dataBlockId));
       for (const getKey of annotDataBlockTableRef.current.getKeyList) {
         mutate(unstable_serialize(getKey));
       }
 
       return dataBlockId;
     },
-    [annotDataBlockTableRef, mutate],
-  );
-
-  const update = useCallback(
-    async (dataBlockId: DataBlockId, updateCallback: (dataBlock: DataBlock) => Promise<DataBlock>) => {
-      if (!annotDataBlockTableRef) return;
-
-      const annotDataBlock = annotDataBlockTableRef.current.payload[dataBlockId];
-      const updateTimestamp = Date.now();
-
-      if (annotDataBlock === undefined || annotDataBlock.updateTimestamp > updateTimestamp) return;
-
-      const isAvailable = annotDataBlock.isAvailable;
-      const newPyaload = await updateCallback(annotDataBlock.payload);
-      const newAnnotDataBlock = { ...annotDataBlock, payload: newPyaload, updateTimestamp, isAvailable };
-
-      annotDataBlockTableRef.current.payload[dataBlockId] = newAnnotDataBlock;
-
-      mutate(dataBlockSwrKey(annotDataBlockTableRef.current.id, dataBlockId));
-      for (const getKey of annotDataBlockTableRef.current.getKeyList) {
-        mutate(unstable_serialize(getKey));
-      }
-
-      return dataBlockId;
-    },
-    [annotDataBlockTableRef, mutate],
+    [annotDataBlockTableRef, roomId, mutate],
   );
 
   return useMemo(
     () => ({
-      isExist,
-      add,
+      get,
+      set,
       remove,
-      update,
     }),
-    [isExist, add, remove, update],
+    [get, set, remove],
   );
 };
 
@@ -111,35 +71,36 @@ export const useDataBlock = <T extends DataBlock>(
   typeChecker: (data: DataBlock) => data is T,
 ) => {
   const annotDataBlockTableRef = useContext(DataBlockTableContext);
+  const { roomId } = useContext(RoomContext);
 
   const dataBlockFetcher = useCallback(async () => {
     if (!annotDataBlockTableRef) return;
 
-    return annotDataBlockTableRef.current.payload[dataBlockId]?.payload;
-  }, [annotDataBlockTableRef, dataBlockId]);
+    return await annotDataBlockTableRef.current.channel.get(roomId, dataBlockId, typeChecker);
+  }, [annotDataBlockTableRef, roomId, dataBlockId, typeChecker]);
 
-  const { update } = useDataBlockTable();
-  const { data } = useSWR(dataBlockSwrKey(annotDataBlockTableRef?.current.id ?? '', dataBlockId), dataBlockFetcher);
+  const { set } = useDataBlockTable();
+  const { data } = useSWR(dataBlockSwrKey(roomId, dataBlockId), dataBlockFetcher);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
-  const bindedUpdate = useCallback(
+  const bindedSet = useCallback(
     async (updateCallback: (dataBlock: T) => Promise<T>) => {
-      await update(dataBlockId, async (dataBlock) => {
-        if (typeChecker(dataBlock)) {
-          return await updateCallback(dataBlock);
-        } else {
-          return dataBlock;
-        }
-      });
+      const data = dataRef.current;
+      if (data && typeChecker(data)) {
+        const dataBlock = await updateCallback(dataRef.current as T);
+        await set(dataBlock);
+      }
     },
-    [dataBlockId, update, typeChecker],
+    [set, typeChecker],
   );
 
   return useMemo(
     () => ({
       dataBlock: !!data && typeChecker(data) ? data : undefined,
-      update: bindedUpdate,
+      set: bindedSet,
     }),
-    [data, bindedUpdate, typeChecker],
+    [data, bindedSet, typeChecker],
   );
 };
 
@@ -148,13 +109,14 @@ export const useDataBlockList = <T extends DataBlock>(
   typeChecker: (data: DataBlock) => data is T,
 ) => {
   const annotDataBlockTableRef = useContext(DataBlockTableContext);
+  const { roomId } = useContext(RoomContext);
 
   const getKey = useCallback(
     (index: number) => {
       const dataBlockId = idList.at(index) ?? DataBlockId.none;
-      return dataBlockSwrKey(annotDataBlockTableRef?.current.id ?? '', dataBlockId);
+      return dataBlockSwrKey(roomId, dataBlockId);
     },
-    [idList, annotDataBlockTableRef],
+    [idList, roomId],
   );
 
   if (annotDataBlockTableRef && annotDataBlockTableRef.current.getKeyList.findIndex((item) => item === getKey) === -1) {
@@ -165,9 +127,9 @@ export const useDataBlockList = <T extends DataBlock>(
     async ([_, dataBlockId]: [string, string]) => {
       if (!annotDataBlockTableRef) return;
 
-      return annotDataBlockTableRef.current.payload[dataBlockId]?.payload;
+      return await annotDataBlockTableRef.current.channel.get(roomId, dataBlockId, typeChecker);
     },
-    [annotDataBlockTableRef],
+    [annotDataBlockTableRef, roomId, typeChecker],
   );
 
   const { data, setSize } = useSWRInfinite(getKey, dataBlockFetcher, {

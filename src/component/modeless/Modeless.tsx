@@ -4,7 +4,7 @@ import { HamburgerIcon } from '@chakra-ui/icons';
 import { Box, Flex, FlexProps, Grid, IconButton, Menu, MenuButton, MenuList } from '@chakra-ui/react';
 
 import { useRefState } from '@/hook/useRefState';
-import { bgColor, txColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/utils/openColor';
 
 import { ModelessMenuItems } from './Modeless/ModelessMenuItems';
 import {

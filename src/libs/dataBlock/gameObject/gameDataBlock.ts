@@ -1,8 +1,7 @@
 import * as t from 'io-ts';
 import { Assign } from 'utility-types';
-import { v4 as uuidv4 } from 'uuid';
 
-import { DataBlock, DataBlockId, PackedDataBlock } from '@/dataBlock';
+import { DataBlock, DataBlockId, PackedDataBlock } from '@/libs/dataBlock';
 
 export const dataBlockType = 'Game';
 
@@ -23,7 +22,7 @@ export const GameDataBlock = {
   },
 
   create(props?: Partial<GameDataBlock>): GameDataBlock {
-    const id = props?.id ?? uuidv4();
+    const id = props?.id ?? DataBlockId.create();
     const sceneList = props?.sceneList ?? [];
     return {
       id,

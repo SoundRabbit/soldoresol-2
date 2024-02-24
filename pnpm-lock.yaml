@@ -38,6 +38,9 @@ dependencies:
   '@types/uuid':
     specifier: ^9.0.8
     version: 9.0.8
+  babylonjs:
+    specifier: ^6.44.0
+    version: 6.44.0
   color:
     specifier: ^4.2.3
     version: 4.2.3
@@ -2133,6 +2136,11 @@ packages:
       '@babel/runtime': 7.23.9
       cosmiconfig: 7.1.0
       resolve: 1.22.8
+    dev: false
+
+  /babylonjs@6.44.0:
+    resolution: {integrity: sha512-d7Uq5bCW+CJQ6+hWrIRbKssqZMAVh337uh+1Dcga/Fc5aOXdMja+BlszfJ8KItGyqz0qgtwZ0tQdnR5miS/Ykw==}
+    requiresBuild: true
     dev: false
 
   /balanced-match@1.0.2:

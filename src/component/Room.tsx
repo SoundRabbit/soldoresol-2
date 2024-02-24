@@ -1,23 +1,29 @@
+'use client';
+
+import React, { useContext } from 'react';
+
 import { Box, Button, Flex, FlexProps, Grid, Stack, Text } from '@chakra-ui/react';
 
 import { Input } from '@/component/common/Input';
 import { KeyValue } from '@/component/common/KeyValue';
 import { SidePanel } from '@/component/common/SidePanel';
 import { ModelessContainer } from '@/component/modeless/ModelessContainer';
-import { DataBlockId } from '@/dataBlock';
-import { bgColor, txColor } from '@/util/openColor';
+import { RoomContext } from '@/context/RoomContext';
+import { DataBlockId } from '@/libs/dataBlock';
+import { bgColor, txColor } from '@/utils/openColor';
 
 import { SidePanelContent } from './Room/SidePanelContent';
 import { useRoom } from './Room/useRoom';
 
 export type RoomProps = Omit<FlexProps, 'children'> & {
-  roomId: string;
   gameDataBlockId: DataBlockId;
   chatDataBlockId: DataBlockId;
 };
 
-export const Room: React.FC<RoomProps> = ({ roomId, gameDataBlockId, chatDataBlockId, ...props }) => {
+export const Room: React.FC<RoomProps> = ({ gameDataBlockId, chatDataBlockId, ...props }) => {
   const { openChatModeless, modelessContainerControllerRef } = useRoom(gameDataBlockId, chatDataBlockId);
+  const { roomId } = useContext(RoomContext);
+
   return (
     <Flex direction={'column'} width={'100%'} height={'100%'} {...props}>
       <Grid

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'Soldoresol',
 };
 
-export const RootLayout = ({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;

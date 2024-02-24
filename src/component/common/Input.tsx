@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Input as ChakraInput, InputProps as ChakraInputProps } from '@chakra-ui/react';
 
-import { bgColor, txColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/utils/openColor';
 
 export type InputProps = ChakraInputProps;
 

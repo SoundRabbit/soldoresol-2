@@ -4,7 +4,7 @@ import { Flex, MenuGroup, MenuGroupProps, MenuItem, Text } from '@chakra-ui/reac
 
 import { CheckBoxIcon } from '@/component/common/icon/CheckBoxIcon';
 import { MouseLeftButtonIcon } from '@/component/common/icon/MouseLeftButtonIcon';
-import { bgColor, txColor } from '@/util/openColor';
+import { bgColor, txColor } from '@/utils/openColor';
 
 export type ModelessMenuItemsProps = MenuGroupProps & {
   onCloseTab: () => void;

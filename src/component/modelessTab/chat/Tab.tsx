@@ -4,10 +4,10 @@ import { ChatIcon } from '@chakra-ui/icons';
 import { Grid, Text } from '@chakra-ui/react';
 
 import { ModelessTab, ModelessTabProps } from '@/component/modeless/ModelessTab';
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
-import { ChatDataBlock } from '@/dataBlock/chatObject/chatDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { ChatDataBlock } from '@/libs/dataBlock/chatObject/chatDataBlock';
 
 import { useSelectedChannelId } from './useChatModelessTab';
 

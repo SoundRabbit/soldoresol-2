@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
 
 import { ToggleButton, ToggleButtonProps } from '@/component/common/ToggleButton';
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
 
 export type MessageTargetToggleButtonProps = Omit<ToggleButtonProps, 'onToggle'> & {
   chatChannelDataBlockId: DataBlockId;

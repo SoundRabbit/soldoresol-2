@@ -5,10 +5,10 @@ import { Tab, TabProps, Text } from '@chakra-ui/react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { DataBlockId } from '@/dataBlock';
-import { ChatChannelDataBlock } from '@/dataBlock/chatObject/chatChannelDataBlock';
 import { useDataBlock } from '@/hook/useDataBlock';
-import { bgColor, txColor } from '@/util/openColor';
+import { DataBlockId } from '@/libs/dataBlock';
+import { ChatChannelDataBlock } from '@/libs/dataBlock/chatObject/chatChannelDataBlock';
+import { bgColor, txColor } from '@/utils/openColor';
 
 export type ChannelEditorTabButtonProps = Omit<TabProps, 'children'> & {
   chatChannelDataBlockId: DataBlockId;
