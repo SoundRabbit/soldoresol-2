@@ -7,7 +7,7 @@ export const refDataBlockType = 'RefTable';
 
 export type TableDataBlock = Assign<DataBlock, { dataBlockType: typeof dataBlockType; name: string }>;
 
-export type RefTableDataBlock = RefOf<TableDataBlock>;
+export type RefTableDataBlock = RefOf<TableDataBlock, typeof refDataBlockType>;
 
 export const TableDataBlock = {
   partialIs(data: unknown): data is TableDataBlock {

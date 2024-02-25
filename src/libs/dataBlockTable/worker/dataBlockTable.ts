@@ -1,3 +1,5 @@
+'use client';
+
 import { DataBlock, DataBlockId } from '@/libs/dataBlock';
 import { Maybe } from '@/utils/utilityTypes';
 

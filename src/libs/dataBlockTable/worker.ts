@@ -1,3 +1,5 @@
+'use client';
+
 import * as dataBlockTable from './worker/dataBlockTable';
 import {
   GetDataBlock,

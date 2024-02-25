@@ -1,3 +1,5 @@
+'use client';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataBlock, DataBlockId } from '@/libs/dataBlock';
@@ -12,17 +14,29 @@ import {
   SetDataBlockResponse,
 } from './dataBlockTable/worker/message';
 
-export class DataBlockTableChannel {
+export type DataBlockTableChannel = {
   worker: Maybe<SharedWorker>;
+};
 
-  constructor() {
-    if (typeof SharedWorker !== 'undefined') {
-      this.worker = new SharedWorker(new URL('@/libs/dataBlockTable/worker.ts', import.meta.url));
-      this.worker.port.start();
-    }
-  }
+export const DataBlockTableChannel = {
+  create(): DataBlockTableChannel {
+    const worker = (() => {
+      if (typeof SharedWorker !== 'undefined') {
+        return new SharedWorker(new URL('@/libs/dataBlockTable/worker.ts', import.meta.url));
+      } else {
+        return undefined;
+      }
+    })();
+
+    worker?.port.start();
+
+    return {
+      worker,
+    };
+  },
 
   async get<T extends DataBlock>(
+    context: DataBlockTableChannel,
     roomId: string,
     dataBlockId: DataBlockId,
     typeChecker: (data: DataBlock) => data is T,
@@ -37,43 +51,46 @@ export class DataBlockTableChannel {
           } else {
             resolve(undefined);
           }
-          this.worker?.port.removeEventListener('message', listener);
+          context.worker?.port.removeEventListener('message', listener);
         }
       };
-      this.worker?.port.addEventListener('message', listener.bind(this));
-      this.worker?.port.postMessage(GetDataBlock.create({ roomId, dataBlockId, sessionId }));
+      context.worker?.port.addEventListener('message', listener);
+      context.worker?.port.postMessage(GetDataBlock.create({ roomId, dataBlockId, sessionId }));
     });
-  }
+  },
 
-  async set<T extends DataBlock>(roomId: string, dataBlockId: DataBlockId, dataBlock: T): Promise<Maybe<DataBlockId>> {
+  async set<T extends DataBlock>(
+    context: DataBlockTableChannel,
+    roomId: string,
+    dataBlockId: DataBlockId,
+    dataBlock: T,
+  ): Promise<Maybe<DataBlockId>> {
     return new Promise((resolve, _reject) => {
       const sessionId = uuidv4();
       const listener = (event: MessageEvent) => {
         const data = event.data;
         if (SetDataBlockResponse.is(data) && data.sessionId === sessionId) {
           resolve(data.dataBlockId);
-          this.worker?.port.removeEventListener('message', listener);
+          context.worker?.port.removeEventListener('message', listener);
         }
       };
-      this.worker?.port.addEventListener('message', listener.bind(this));
-      this.worker?.port.postMessage(SetDataBlock.create({ roomId, dataBlockId, sessionId, dataBlock }));
-      this.worker?.port.start();
+      context.worker?.port.addEventListener('message', listener);
+      context.worker?.port.postMessage(SetDataBlock.create({ roomId, dataBlockId, sessionId, dataBlock }));
     });
-  }
+  },
 
-  async remove(roomId: string, dataBlockId: DataBlockId): Promise<Maybe<DataBlockId>> {
+  async remove(context: DataBlockTableChannel, roomId: string, dataBlockId: DataBlockId): Promise<Maybe<DataBlockId>> {
     return new Promise((resolve, _reject) => {
       const sessionId = uuidv4();
       const listener = (event: MessageEvent) => {
         const data = event.data;
         if (RemoveDataBlockResponse.is(data) && data.sessionId === sessionId) {
           resolve(data.dataBlockId);
-          this.worker?.port.removeEventListener('message', listener);
+          context.worker?.port.removeEventListener('message', listener);
         }
       };
-      this.worker?.port.addEventListener('message', listener.bind(this));
-      this.worker?.port.postMessage(RemoveDataBlock.create({ roomId, dataBlockId, sessionId }));
-      this.worker?.port.start();
+      context.worker?.port.addEventListener('message', listener);
+      context.worker?.port.postMessage(RemoveDataBlock.create({ roomId, dataBlockId, sessionId }));
     });
-  }
-}
+  },
+};
