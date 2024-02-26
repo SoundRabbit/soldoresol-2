@@ -12,52 +12,64 @@ import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 const dataBlockSwrKey = (roomId: string, dataBlockId: DataBlockId) => [roomId, dataBlockId];
 
 export const useDataBlockTable = () => {
-  const annotDataBlockTableRef = useContext(DataBlockTableContext);
-  const { roomId } = useContext(RoomContext);
+  const tableContext = useContext(DataBlockTableContext);
+  const roomContext = useContext(RoomContext);
 
   const { mutate } = useSWRConfig();
 
+  const mutateKey = useCallback(
+    (dataBlockId: DataBlockId) => {
+      if (!tableContext || !roomContext) return;
+      const context = tableContext.channel;
+      const roomId = roomContext.roomId;
+
+      mutate(dataBlockSwrKey(roomContext.roomId, dataBlockId));
+
+      for (const getKey of tableContext.mutData.current.getKeyList) {
+        mutate(unstable_serialize(getKey));
+      }
+    },
+    [tableContext, roomContext, mutate],
+  );
+
   const get = useCallback(
     async <T extends DataBlock>(dataBlockId: DataBlockId, typeChecker: (data: DataBlock) => data is T) => {
-      if (!annotDataBlockTableRef || !annotDataBlockTableRef.current.channel) return;
+      if (!tableContext || !roomContext) return;
+      const context = tableContext.channel;
+      const roomId = roomContext.roomId;
 
-      const context = annotDataBlockTableRef.current.channel;
       return await DataBlockTableChannel.get(context, roomId, dataBlockId, typeChecker);
     },
-    [annotDataBlockTableRef, roomId],
+    [tableContext, roomContext],
   );
 
   const set = useCallback(
     async (dataBlock: DataBlock) => {
-      if (!annotDataBlockTableRef || !annotDataBlockTableRef.current.channel) return;
+      if (!tableContext || !roomContext) return;
+      const context = tableContext.channel;
+      const roomId = roomContext.roomId;
 
-      const context = annotDataBlockTableRef.current.channel;
       await DataBlockTableChannel.set(context, roomId, dataBlock.id, dataBlock);
-      mutate(dataBlockSwrKey(roomId, dataBlock.id));
-      for (const getKey of annotDataBlockTableRef.current.getKeyList) {
-        mutate(unstable_serialize(getKey));
-      }
+      mutateKey(dataBlock.id);
 
       return dataBlock.id;
     },
-    [annotDataBlockTableRef, roomId, mutate],
+    [tableContext, roomContext, mutateKey],
   );
 
   const remove = useCallback(
     async (dataBlockId: DataBlockId) => {
-      if (!annotDataBlockTableRef || !annotDataBlockTableRef.current.channel) return;
+      if (!tableContext || !roomContext) return;
+      const context = tableContext.channel;
+      const roomId = roomContext.roomId;
 
-      const context = annotDataBlockTableRef.current.channel;
       await DataBlockTableChannel.remove(context, roomId, dataBlockId);
 
-      mutate(dataBlockSwrKey(roomId, dataBlockId));
-      for (const getKey of annotDataBlockTableRef.current.getKeyList) {
-        mutate(unstable_serialize(getKey));
-      }
+      mutateKey(dataBlockId);
 
       return dataBlockId;
     },
-    [annotDataBlockTableRef, roomId, mutate],
+    [tableContext, roomContext, mutateKey],
   );
 
   return useMemo(
@@ -74,18 +86,19 @@ export const useDataBlock = <T extends DataBlock>(
   dataBlockId: DataBlockId,
   typeChecker: (data: DataBlock) => data is T,
 ) => {
-  const annotDataBlockTableRef = useContext(DataBlockTableContext);
-  const { roomId } = useContext(RoomContext);
+  const tableContext = useContext(DataBlockTableContext);
+  const roomContext = useContext(RoomContext);
 
   const dataBlockFetcher = useCallback(async () => {
-    if (!annotDataBlockTableRef || !annotDataBlockTableRef.current.channel) return;
+    if (!tableContext || !roomContext) return;
+    const context = tableContext.channel;
+    const roomId = roomContext.roomId;
 
-    const context = annotDataBlockTableRef.current.channel;
     return await DataBlockTableChannel.get(context, roomId, dataBlockId, typeChecker);
-  }, [annotDataBlockTableRef, roomId, dataBlockId, typeChecker]);
+  }, [tableContext, roomContext, dataBlockId, typeChecker]);
 
   const { set } = useDataBlockTable();
-  const { data } = useSWR(dataBlockSwrKey(roomId, dataBlockId), dataBlockFetcher);
+  const { data } = useSWR(dataBlockSwrKey(roomContext?.roomId ?? '', dataBlockId), dataBlockFetcher);
   const dataRef = useRef(data);
   dataRef.current = data;
 
@@ -113,29 +126,30 @@ export const useDataBlockList = <T extends DataBlock>(
   idList: DataBlockId[],
   typeChecker: (data: DataBlock) => data is T,
 ) => {
-  const annotDataBlockTableRef = useContext(DataBlockTableContext);
-  const { roomId } = useContext(RoomContext);
+  const tableContext = useContext(DataBlockTableContext);
+  const roomContext = useContext(RoomContext);
 
   const getKey = useCallback(
     (index: number) => {
       const dataBlockId = idList.at(index) ?? DataBlockId.none;
-      return dataBlockSwrKey(roomId, dataBlockId);
+      return dataBlockSwrKey(roomContext?.roomId ?? '', dataBlockId);
     },
-    [idList, roomId],
+    [idList, roomContext],
   );
 
-  if (annotDataBlockTableRef && annotDataBlockTableRef.current.getKeyList.findIndex((item) => item === getKey) === -1) {
-    annotDataBlockTableRef.current.getKeyList.push(getKey);
+  if (tableContext && tableContext.mutData.current.getKeyList.findIndex((item) => item === getKey) === -1) {
+    tableContext.mutData.current.getKeyList.push(getKey);
   }
 
   const dataBlockFetcher = useCallback(
     async ([_, dataBlockId]: [string, string]) => {
-      if (!annotDataBlockTableRef || !annotDataBlockTableRef.current.channel) return;
+      if (!tableContext || !roomContext) return;
+      const context = tableContext.channel;
+      const roomId = roomContext.roomId;
 
-      const context = annotDataBlockTableRef.current.channel;
       return await DataBlockTableChannel.get(context, roomId, dataBlockId, typeChecker);
     },
-    [annotDataBlockTableRef, roomId, typeChecker],
+    [tableContext, roomContext, typeChecker],
   );
 
   const { data, setSize } = useSWRInfinite(getKey, dataBlockFetcher, {
@@ -151,17 +165,17 @@ export const useDataBlockList = <T extends DataBlock>(
 
   const idListLength = useMemo(() => idList.length, [idList]);
 
-  const creanupGetKeyList = useCallback(() => {
-    if (annotDataBlockTableRef) {
-      annotDataBlockTableRef.current.getKeyList = annotDataBlockTableRef.current.getKeyList.filter(
+  const cleanupGetKeyList = useCallback(() => {
+    if (tableContext) {
+      tableContext.mutData.current.getKeyList = tableContext.mutData.current.getKeyList.filter(
         (item) => item !== getKey,
       );
     }
-  }, [annotDataBlockTableRef, getKey]);
+  }, [tableContext, getKey]);
 
   useEffect(() => {
-    return creanupGetKeyList;
-  }, [creanupGetKeyList]);
+    return cleanupGetKeyList;
+  }, [cleanupGetKeyList]);
 
   useEffect(() => {
     setSize(idListLength);

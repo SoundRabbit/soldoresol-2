@@ -3,8 +3,7 @@
 import { Maybe } from '@/utils/utilityTypes';
 
 import { Renderer } from './renderer';
-import { RunRenderer } from './worker/runRenderer';
-import { SetCanvasSize } from './worker/setCanvasSize';
+import { RunRenderer, SetCanvasSize, SetTableDataBlockId } from './worker/message';
 
 const context = {
   renderer: undefined as Maybe<Renderer>,
@@ -15,7 +14,7 @@ if (typeof DedicatedWorkerGlobalScope !== 'undefined' && self instanceof Dedicat
   (self as DedicatedWorkerGlobalScope).addEventListener('message', async (e) => {
     const data = e.data;
     if (RunRenderer.is(data)) {
-      context.renderer = Renderer.create(data.roomId, data.canvas);
+      context.renderer = Renderer.create(data.roomId, data.canvas, data.port);
       context.canvas = data.canvas;
       Renderer.run(context.renderer);
     }
@@ -25,6 +24,11 @@ if (typeof DedicatedWorkerGlobalScope !== 'undefined' && self instanceof Dedicat
         context.canvas.height = data.height;
       }
       context.renderer?.engine.resize();
+    }
+    if (SetTableDataBlockId.is(data)) {
+      if (context.renderer) {
+        context.renderer.tableDataBlockId = data.tableDataBlockId;
+      }
     }
   });
 }

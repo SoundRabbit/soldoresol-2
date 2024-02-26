@@ -4,6 +4,7 @@ export type RunRenderer = {
   tag: typeof tagName;
   roomId: string;
   canvas: OffscreenCanvas;
+  port: MessagePort;
 };
 
 export const RunRenderer = {

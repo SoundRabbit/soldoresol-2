@@ -8,11 +8,11 @@ import {
   RemoveDataBlockResponse,
   SetDataBlock,
   SetDataBlockResponse,
+  SetPort,
 } from './worker/message';
 
 if (typeof SharedWorkerGlobalScope !== 'undefined' && self instanceof SharedWorkerGlobalScope) {
-  (self as SharedWorkerGlobalScope).addEventListener('connect', (e) => {
-    const port = e.ports[0];
+  const setListener = (port: MessagePort) => {
     port.onmessage = (e) => {
       const data = e.data;
       if (GetDataBlock.is(data)) {
@@ -25,12 +25,8 @@ if (typeof SharedWorkerGlobalScope !== 'undefined' && self instanceof SharedWork
             dataBlock: dataBlock,
           }),
         );
-      } else if (SetDataBlock.is(data)) {
-        const dataBlockId = dataBlockTable.setDataBlock(data.roomId, data.dataBlock);
-        port.postMessage(
-          SetDataBlockResponse.create({ sessionId: data.sessionId, roomId: data.roomId, dataBlockId: dataBlockId }),
-        );
-      } else if (RemoveDataBlock.is(data)) {
+      }
+      if (RemoveDataBlock.is(data)) {
         const dataBlockId = dataBlockTable.removeDataBlock(data.roomId, data.dataBlockId);
         port.postMessage(
           RemoveDataBlockResponse.create({
@@ -40,7 +36,21 @@ if (typeof SharedWorkerGlobalScope !== 'undefined' && self instanceof SharedWork
           }),
         );
       }
+      if (SetDataBlock.is(data)) {
+        const dataBlockId = dataBlockTable.setDataBlock(data.roomId, data.dataBlock);
+        port.postMessage(
+          SetDataBlockResponse.create({ sessionId: data.sessionId, roomId: data.roomId, dataBlockId: dataBlockId }),
+        );
+      }
+      if (SetPort.is(data)) {
+        setListener(data.port);
+      }
     };
+  };
+
+  (self as SharedWorkerGlobalScope).addEventListener('connect', (e) => {
+    const port = e.ports[0];
+    setListener(port);
     port.start();
   });
 }

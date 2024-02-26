@@ -12,26 +12,32 @@ import {
   RemoveDataBlockResponse,
   SetDataBlock,
   SetDataBlockResponse,
+  SetPort,
 } from './dataBlockTable/worker/message';
 
 export type DataBlockTableChannel = {
   worker: Maybe<SharedWorker>;
+  port: Maybe<MessagePort>;
 };
 
 export const DataBlockTableChannel = {
-  create(): DataBlockTableChannel {
+  create(port?: MessagePort): DataBlockTableChannel {
     const worker = (() => {
-      if (typeof SharedWorker !== 'undefined') {
-        return new SharedWorker(new URL('@/libs/dataBlockTable/worker.ts', import.meta.url));
+      if (typeof SharedWorker !== 'undefined' && !port) {
+        return new SharedWorker(new URL('@/libs/dataBlockTable/worker.ts', import.meta.url), {
+          name: 'dataBlockTable',
+        });
       } else {
         return undefined;
       }
     })();
 
-    worker?.port.start();
+    port = port || worker?.port;
+    port?.start();
 
     return {
       worker,
+      port,
     };
   },
 
@@ -51,11 +57,11 @@ export const DataBlockTableChannel = {
           } else {
             resolve(undefined);
           }
-          context.worker?.port.removeEventListener('message', listener);
+          context.port?.removeEventListener('message', listener);
         }
       };
-      context.worker?.port.addEventListener('message', listener);
-      context.worker?.port.postMessage(GetDataBlock.create({ roomId, dataBlockId, sessionId }));
+      context.port?.addEventListener('message', listener);
+      context.port?.postMessage(GetDataBlock.create({ roomId, dataBlockId, sessionId }));
     });
   },
 
@@ -71,11 +77,11 @@ export const DataBlockTableChannel = {
         const data = event.data;
         if (SetDataBlockResponse.is(data) && data.sessionId === sessionId) {
           resolve(data.dataBlockId);
-          context.worker?.port.removeEventListener('message', listener);
+          context.port?.removeEventListener('message', listener);
         }
       };
-      context.worker?.port.addEventListener('message', listener);
-      context.worker?.port.postMessage(SetDataBlock.create({ roomId, dataBlockId, sessionId, dataBlock }));
+      context.port?.addEventListener('message', listener);
+      context.port?.postMessage(SetDataBlock.create({ roomId, dataBlockId, sessionId, dataBlock }));
     });
   },
 
@@ -86,11 +92,15 @@ export const DataBlockTableChannel = {
         const data = event.data;
         if (RemoveDataBlockResponse.is(data) && data.sessionId === sessionId) {
           resolve(data.dataBlockId);
-          context.worker?.port.removeEventListener('message', listener);
+          context.port?.removeEventListener('message', listener);
         }
       };
-      context.worker?.port.addEventListener('message', listener);
-      context.worker?.port.postMessage(RemoveDataBlock.create({ roomId, dataBlockId, sessionId }));
+      context.port?.addEventListener('message', listener);
+      context.port?.postMessage(RemoveDataBlock.create({ roomId, dataBlockId, sessionId }));
     });
+  },
+
+  setPort(context: DataBlockTableChannel, port: MessagePort) {
+    context.worker?.port.postMessage(SetPort.create({ port }), [port]);
   },
 };

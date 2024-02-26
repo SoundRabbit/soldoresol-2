@@ -1,13 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 
 import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
 
 import { Button } from '@/component/common/Button';
+import { RoomContext } from '@/context/RoomContext';
 import { useDataBlock, useDataBlockTable } from '@/hook/useDataBlock';
 import { DataBlockId } from '@/libs/dataBlock';
 import { GameDataBlock } from '@/libs/dataBlock/gameObject/gameDataBlock';
 import { SceneDataBlock } from '@/libs/dataBlock/gameObject/sceneDataBlock';
 import { TableDataBlock } from '@/libs/dataBlock/gameObject/tableDataBlock';
+import { TableRendererChannel } from '@/libs/tableRenderer';
 import { NonChildren } from '@/utils/utilityTypes';
 
 import { SceneListItem } from './SceneTabPanel/SceneListItem';
@@ -19,6 +21,7 @@ export type SceneTabPanelProps = NonChildren<TabPanelProps> & {
 export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, ...props }) => {
   const { set: setDataBlock } = useDataBlockTable();
   const { dataBlock: game, set: setGame } = useDataBlock(gameDataBlockId, GameDataBlock.partialIs);
+  const roomContext = useContext(RoomContext);
 
   const handleAddScene = useCallback(async () => {
     const mainTable = TableDataBlock.create({ name: '新しいテーブル' });
@@ -34,7 +37,11 @@ export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, .
       const sceneList = [...game.sceneList, sceneId];
       return { ...game, sceneList };
     });
-  }, [setDataBlock, setGame]);
+
+    if (roomContext) {
+      TableRendererChannel.setTableDataBlockId(roomContext.renderer, mainTableId);
+    }
+  }, [setDataBlock, setGame, roomContext]);
   const sceneIdList = useMemo(() => game?.sceneList ?? [], [game]);
 
   return (

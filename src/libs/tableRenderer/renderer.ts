@@ -27,8 +27,9 @@ export const Renderer = {
   create(
     roomId: string,
     canvas: BABYLON.Nullable<HTMLCanvasElement | OffscreenCanvas | WebGLRenderingContext | WebGL2RenderingContext>,
+    port?: MessagePort,
   ): Renderer {
-    const dataBlockTable = DataBlockTableChannel.create();
+    const dataBlockTable = DataBlockTableChannel.create(port);
     const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
     return {

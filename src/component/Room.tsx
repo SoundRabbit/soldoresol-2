@@ -8,6 +8,7 @@ import { Input } from '@/component/common/Input';
 import { KeyValue } from '@/component/common/KeyValue';
 import { SidePanel } from '@/component/common/SidePanel';
 import { ModelessContainer } from '@/component/modeless/ModelessContainer';
+import { DataBlockTableContext } from '@/context/DataBlockTable';
 import { RoomContext } from '@/context/RoomContext';
 import { DataBlockId } from '@/libs/dataBlock';
 import { TableRendererChannel } from '@/libs/tableRenderer';
@@ -25,27 +26,31 @@ export type RoomProps = Omit<FlexProps, 'children'> & {
 
 export const Room: React.FC<RoomProps> = ({ gameDataBlockId, chatDataBlockId, ...props }) => {
   const { openChatModeless, modelessContainerControllerRef } = useRoom(gameDataBlockId, chatDataBlockId);
-  const { roomId, renderer } = useContext(RoomContext);
+  const roomContext = useContext(RoomContext);
+  const tableContext = useContext(DataBlockTableContext);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleCanvasRef = useCallback(
     (canvas: HTMLCanvasElement | null) => {
-      if (!canvasRef.current && canvas && renderer && roomId !== '') {
+      if (!canvasRef.current && canvas && roomContext && tableContext) {
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
         const offscreen = canvas.transferControlToOffscreen();
-        TableRendererChannel.run(renderer, roomId, offscreen);
+        TableRendererChannel.run(roomContext.renderer, tableContext.channel, roomContext.roomId, offscreen);
       }
       canvasRef.current = canvas;
     },
-    [roomId, renderer],
+    [roomContext, tableContext],
   );
 
   const handleChangeCanvasSize = useCallback(() => {
-    if (canvasRef.current && renderer) {
-      TableRendererChannel.setCanvasSize(renderer, [canvasRef.current.clientWidth, canvasRef.current.clientHeight]);
+    if (canvasRef.current && roomContext) {
+      TableRendererChannel.setCanvasSize(roomContext.renderer, [
+        canvasRef.current.clientWidth,
+        canvasRef.current.clientHeight,
+      ]);
     }
-  }, [renderer]);
+  }, [roomContext]);
 
   useEffect(() => {
     window.addEventListener('resize', handleChangeCanvasSize);
@@ -66,7 +71,7 @@ export const Room: React.FC<RoomProps> = ({ gameDataBlockId, chatDataBlockId, ..
       >
         <KeyValue>
           <Text>ルームID</Text>
-          <Input isReadOnly={true} value={roomId} />
+          <Input isReadOnly={true} value={roomContext?.roomId ?? ''} />
         </KeyValue>
         <Box />
         <Stack direction='row'>

@@ -1,36 +1,40 @@
 'use client';
 
-import React, { MutableRefObject, useEffect, useRef } from 'react';
+import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataBlockId } from '@/libs/dataBlock';
 import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 import { Maybe } from '@/utils/utilityTypes';
 
-import { AnnotDataBlock } from './DataBlockTable/annotDataBlock';
-
-export type DataBlockTable = Record<DataBlockId, AnnotDataBlock | undefined>;
-
-export type AnnotDataBlockTable = {
-  channel: Maybe<DataBlockTableChannel>;
+export type DataBlockTableContextMutData = {
   getKeyList: ((index: number) => any)[];
 };
 
-export const DataBlockTableContext = React.createContext<Maybe<MutableRefObject<AnnotDataBlockTable>>>(undefined);
+export type DataBlockTableContextData = {
+  channel: DataBlockTableChannel;
+  mutData: MutableRefObject<DataBlockTableContextMutData>;
+};
+
+export const DataBlockTableContext = React.createContext<Maybe<DataBlockTableContextData>>(undefined);
 
 export type DataBlockTableProviderProps = {
   children?: React.ReactNode;
 };
 
 export const DataBlockTableProvider: React.FC<DataBlockTableProviderProps> = ({ children }) => {
-  const dataBlockTableRef = useRef<AnnotDataBlockTable>({
+  const mutDataRef = useRef<DataBlockTableContextMutData>({
     getKeyList: [],
-    channel: undefined,
   });
 
+  const [channel, setChannel] = useState<Maybe<DataBlockTableChannel>>(undefined);
+
+  const contextData = useMemo(() => (channel ? { channel, mutData: mutDataRef } : undefined), [channel]);
+
   useEffect(() => {
-    console.log('DataBlockTableProvider');
-    dataBlockTableRef.current.channel = DataBlockTableChannel.create();
+    setChannel((prev) => {
+      prev?.worker?.port.close();
+      return DataBlockTableChannel.create();
+    });
   }, []);
 
-  return <DataBlockTableContext.Provider value={dataBlockTableRef}>{children}</DataBlockTableContext.Provider>;
+  return <DataBlockTableContext.Provider value={contextData}>{children}</DataBlockTableContext.Provider>;
 };
