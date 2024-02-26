@@ -25,7 +25,7 @@ export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, .
   const roomContext = useContext(RoomContext);
 
   const handleAddScene = useCallback(async () => {
-    const workboard = WorkboardDataBlock.create({ size: [10, 10] });
+    const workboard = WorkboardDataBlock.create({ name: '新しい盤面', size: [10, 10] });
     const workboardId = await setDataBlock(workboard);
     if (workboardId === undefined) return;
 

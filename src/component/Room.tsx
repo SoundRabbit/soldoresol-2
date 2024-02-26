@@ -33,8 +33,9 @@ export const Room: React.FC<RoomProps> = ({ gameDataBlockId, chatDataBlockId, ..
   const handleCanvasRef = useCallback(
     (canvas: HTMLCanvasElement | null) => {
       if (!canvasRef.current && canvas && roomContext && tableContext) {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        canvas.width = canvas.clientWidth * devicePixelRatio;
+        canvas.height = canvas.clientHeight * devicePixelRatio;
         const offscreen = canvas.transferControlToOffscreen();
         TableRendererChannel.run(roomContext.renderer, tableContext.channel, roomContext.roomId, offscreen);
       }
@@ -45,9 +46,10 @@ export const Room: React.FC<RoomProps> = ({ gameDataBlockId, chatDataBlockId, ..
 
   const handleChangeCanvasSize = useCallback(() => {
     if (canvasRef.current && roomContext) {
+      const devicePixelRatio = window.devicePixelRatio || 1;
       TableRendererChannel.setCanvasSize(roomContext.renderer, [
-        canvasRef.current.clientWidth,
-        canvasRef.current.clientHeight,
+        canvasRef.current.clientWidth * devicePixelRatio,
+        canvasRef.current.clientHeight * devicePixelRatio,
       ]);
     }
   }, [roomContext]);

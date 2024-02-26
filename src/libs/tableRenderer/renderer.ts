@@ -22,11 +22,14 @@ type DataBlockCache = Record<DataBlockId, Maybe<AnnotDataBlock>>;
 export type Renderer = {
   dataBlockTable: DataBlockTableChannel;
   engine: BABYLON.Engine;
-  scene: Maybe<BABYLON.Scene>; //最終的には、テーブルごとにシーンを作成する
+
   roomId: string;
   tableDataBlockId: DataBlockId;
   dataBlockCache: DataBlockCache;
   rendered: Set<DataBlockId>;
+
+  camera: Maybe<BABYLON.FreeCamera>;
+  tableScene: Record<DataBlockId, Maybe<BABYLON.Scene>>;
   workboardDataBlockRenderer: WorkboardDataBlockRenderer;
 };
 
@@ -79,25 +82,32 @@ const getDataBlock = <T extends DataBlock>(
 };
 
 const renderScene = (context: Renderer, tableDataBlockId: DataBlockId) => {
+  if (tableDataBlockId === DataBlockId.none) return;
+
   reasetCacheMark(context);
 
   const rendered = new Set<DataBlockId>();
 
-  const { payload: tableDataBlock } = getDataBlock(context, tableDataBlockId, TableDataBlock.partialIs);
-
-  if (context.scene === undefined) {
+  if (!context.tableScene[tableDataBlockId]) {
     const scene = new BABYLON.Scene(context.engine);
-    const camera = new BABYLON.FreeCamera('mainCamera', new BABYLON.Vector3(5, -10, 10));
-    camera.setTarget(BABYLON.Vector3.Zero());
+
     const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0));
     light.intensity = 0.7;
-
-    scene.addCamera(camera);
+    if (!context.camera) {
+      const camera = new BABYLON.FreeCamera('mainCamera', new BABYLON.Vector3(5, 15, -15));
+      camera.setTarget(BABYLON.Vector3.Zero());
+      context.camera = camera;
+    }
+    scene.addCamera(context.camera);
     scene.addLight(light);
-    scene.activeCamera = camera;
+    scene.activeCamera = context.camera;
 
-    context.scene = scene;
+    context.tableScene[tableDataBlockId] = scene;
   }
+
+  const scene = context.tableScene[tableDataBlockId]!;
+
+  const { payload: tableDataBlock } = getDataBlock(context, tableDataBlockId, TableDataBlock.partialIs);
 
   if (tableDataBlock) {
     const workboardDataBlockIdList = tableDataBlock.workboardList;
@@ -106,7 +116,7 @@ const renderScene = (context: Renderer, tableDataBlockId: DataBlockId) => {
       rendered,
       (dataBlockId, typeChecker) => getDataBlock(context, dataBlockId, typeChecker),
       workboardDataBlockIdList,
-      context.scene,
+      scene,
     );
   }
 };
@@ -118,25 +128,29 @@ export const Renderer = {
     port?: MessagePort,
   ): Renderer {
     const dataBlockTable = DataBlockTableChannel.create(port);
-    const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    const antiAliasing = false;
+    const engine = new BABYLON.Engine(canvas, antiAliasing, { preserveDrawingBuffer: true, stencil: true });
 
     return {
       dataBlockTable,
       engine,
-      scene: undefined,
       tableDataBlockId: DataBlockId.none,
       roomId,
       dataBlockCache: {},
       rendered: new Set(),
+      camera: undefined,
+      tableScene: {},
       workboardDataBlockRenderer: WorkboardDataBlockRenderer.create(),
     };
   },
 
   run(context: Renderer) {
     context.engine?.runRenderLoop(() => {
-      if (context.tableDataBlockId === DataBlockId.none) return;
-      renderScene(context, context.tableDataBlockId);
-      context.scene?.render();
+      const tableDataBlockId = context.tableDataBlockId;
+      if (tableDataBlockId === DataBlockId.none) return;
+
+      renderScene(context, tableDataBlockId);
+      context.tableScene[tableDataBlockId]?.render();
     });
   },
 
