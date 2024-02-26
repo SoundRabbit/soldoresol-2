@@ -15,6 +15,7 @@ export type GetDataBlockResponse = {
   roomId: string;
   dataBlockId: string;
   dataBlock: DataBlock | undefined;
+  updateTimestamp: number;
 };
 
 export const GetDataBlock = {

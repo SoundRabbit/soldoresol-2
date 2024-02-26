@@ -47,15 +47,25 @@ export const DataBlockTableChannel = {
     dataBlockId: DataBlockId,
     typeChecker: (data: DataBlock) => data is T,
   ): Promise<Maybe<T>> {
+    const { dataBlock } = await DataBlockTableChannel.getWithTimestamp(context, roomId, dataBlockId, typeChecker);
+    return dataBlock;
+  },
+
+  async getWithTimestamp<T extends DataBlock>(
+    context: DataBlockTableChannel,
+    roomId: string,
+    dataBlockId: DataBlockId,
+    typeChecker: (data: DataBlock) => data is T,
+  ): Promise<{ dataBlock: Maybe<T>; updateTimestamp: number }> {
     return new Promise((resolve, _reject) => {
       const sessionId = uuidv4();
       const listener = (event: MessageEvent) => {
         const data = event.data;
         if (GetDataBlockResponse.is(data) && data.sessionId === sessionId) {
           if (data.dataBlock !== undefined && typeChecker(data.dataBlock)) {
-            resolve(data.dataBlock);
+            resolve({ dataBlock: data.dataBlock, updateTimestamp: data.updateTimestamp });
           } else {
-            resolve(undefined);
+            resolve({ dataBlock: undefined, updateTimestamp: data.updateTimestamp });
           }
           context.port?.removeEventListener('message', listener);
         }

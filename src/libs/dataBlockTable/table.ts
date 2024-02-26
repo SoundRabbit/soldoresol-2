@@ -3,7 +3,7 @@
 import { DataBlock, DataBlockId } from '@/libs/dataBlock';
 import { Maybe } from '@/utils/utilityTypes';
 
-import { AnnotDataBlock } from './annotDataBlock';
+import { AnnotDataBlock } from './table/annotDataBlock';
 
 type DataBlockTable = Record<DataBlockId, AnnotDataBlock | undefined>;
 type DataBlockTableByRoom = Record<string, DataBlockTable>;
@@ -17,11 +17,17 @@ const getDataBlockTable = (roomId: string): DataBlockTable => {
   return dataBlockTableByRoom[roomId];
 };
 
-export const getDataBlock = (roomId: string, dataBlockId: DataBlockId): Maybe<DataBlock> => {
+export const getDataBlock = (
+  roomId: string,
+  dataBlockId: DataBlockId,
+): { payload: Maybe<DataBlock>; updateTimestamp: number } => {
   const dataBlockTable = getDataBlockTable(roomId);
   const annotDataBlock = dataBlockTable[dataBlockId];
 
-  return annotDataBlock?.isAvailable ? annotDataBlock.payload : undefined;
+  return {
+    payload: annotDataBlock?.isAvailable ? annotDataBlock.payload : undefined,
+    updateTimestamp: annotDataBlock?.updateTimestamp ?? NaN,
+  };
 };
 
 export const addDataBlock = (roomId: string, dataBlock: DataBlock): Maybe<DataBlockId> => {

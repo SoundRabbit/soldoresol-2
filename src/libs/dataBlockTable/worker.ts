@@ -1,6 +1,6 @@
 'use client';
 
-import * as dataBlockTable from './worker/dataBlockTable';
+import * as dataBlockTable from './table';
 import {
   GetDataBlock,
   GetDataBlockResponse,
@@ -16,13 +16,14 @@ if (typeof SharedWorkerGlobalScope !== 'undefined' && self instanceof SharedWork
     port.onmessage = (e) => {
       const data = e.data;
       if (GetDataBlock.is(data)) {
-        const dataBlock = dataBlockTable.getDataBlock(data.roomId, data.dataBlockId);
+        const { payload: dataBlock, updateTimestamp } = dataBlockTable.getDataBlock(data.roomId, data.dataBlockId);
         port.postMessage(
           GetDataBlockResponse.create({
             sessionId: data.sessionId,
             roomId: data.roomId,
             dataBlockId: data.dataBlockId,
-            dataBlock: dataBlock,
+            dataBlock,
+            updateTimestamp,
           }),
         );
       }

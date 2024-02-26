@@ -5,9 +5,19 @@ import { TableDataBlock } from '@/libs/dataBlock/gameObject/tableDataBlock';
 import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 import { Maybe } from '@/utils/utilityTypes';
 
+import { WorkboardDataBlockRenderer } from './renderer/workboardDataBlockRenderer';
+
 importScripts('https://cdn.babylonjs.com/babylon.js');
 
 type BABYLON = typeof import('babylonjs');
+
+type AnnotDataBlock = {
+  payload: Maybe<DataBlock>;
+  isCached: boolean;
+  updateTimestamp: number;
+};
+
+type DataBlockCache = Record<DataBlockId, Maybe<AnnotDataBlock>>;
 
 export type Renderer = {
   dataBlockTable: DataBlockTableChannel;
@@ -15,12 +25,90 @@ export type Renderer = {
   scene: Maybe<BABYLON.Scene>; //最終的には、テーブルごとにシーンを作成する
   roomId: string;
   tableDataBlockId: DataBlockId;
-  dataBlockChache: Record<DataBlockId, Maybe<AnnotDataBlock>>;
+  dataBlockCache: DataBlockCache;
+  rendered: Set<DataBlockId>;
+  workboardDataBlockRenderer: WorkboardDataBlockRenderer;
 };
 
-type AnnotDataBlock = {
-  payload: Maybe<DataBlock>;
-  isChached: boolean;
+const reasetCacheMark = (context: Renderer) => {
+  const keys = Object.keys(context.dataBlockCache);
+  for (const key of keys) {
+    context.dataBlockCache[key]!.isCached = false;
+  }
+};
+
+const getDataBlock = <T extends DataBlock>(
+  context: Renderer,
+  dataBlockId: DataBlockId,
+  typeChecker: (data: unknown) => data is T,
+): {
+  payload: Maybe<T>;
+  updateTimestamp: number;
+} => {
+  if (context.dataBlockCache[dataBlockId]?.isCached) {
+    const { payload, updateTimestamp } = context.dataBlockCache[dataBlockId]!;
+    if (typeChecker(payload)) {
+      return { payload, updateTimestamp };
+    } else {
+      return { payload: undefined, updateTimestamp: 0 };
+    }
+  }
+
+  if (context.dataBlockCache[dataBlockId]) {
+    context.dataBlockCache[dataBlockId]!.isCached = true;
+  } else {
+    context.dataBlockCache[dataBlockId] = { isCached: true, payload: undefined, updateTimestamp: 0 };
+  }
+
+  DataBlockTableChannel.getWithTimestamp(context.dataBlockTable, context.roomId, dataBlockId, typeChecker).then(
+    ({ dataBlock, updateTimestamp }) => {
+      context.dataBlockCache[dataBlockId] = {
+        isCached: true,
+        payload: dataBlock,
+        updateTimestamp: isNaN(updateTimestamp) ? 0 : updateTimestamp,
+      };
+    },
+  );
+
+  const { payload, updateTimestamp } = context.dataBlockCache[dataBlockId]!;
+  if (typeChecker(payload)) {
+    return { payload, updateTimestamp };
+  } else {
+    return { payload: undefined, updateTimestamp: 0 };
+  }
+};
+
+const renderScene = (context: Renderer, tableDataBlockId: DataBlockId) => {
+  reasetCacheMark(context);
+
+  const rendered = new Set<DataBlockId>();
+
+  const { payload: tableDataBlock } = getDataBlock(context, tableDataBlockId, TableDataBlock.partialIs);
+
+  if (context.scene === undefined) {
+    const scene = new BABYLON.Scene(context.engine);
+    const camera = new BABYLON.FreeCamera('mainCamera', new BABYLON.Vector3(5, -10, 10));
+    camera.setTarget(BABYLON.Vector3.Zero());
+    const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0));
+    light.intensity = 0.7;
+
+    scene.addCamera(camera);
+    scene.addLight(light);
+    scene.activeCamera = camera;
+
+    context.scene = scene;
+  }
+
+  if (tableDataBlock) {
+    const workboardDataBlockIdList = tableDataBlock.workboardList;
+    WorkboardDataBlockRenderer.render(
+      context.workboardDataBlockRenderer,
+      rendered,
+      (dataBlockId, typeChecker) => getDataBlock(context, dataBlockId, typeChecker),
+      workboardDataBlockIdList,
+      context.scene,
+    );
+  }
 };
 
 export const Renderer = {
@@ -36,59 +124,23 @@ export const Renderer = {
       dataBlockTable,
       engine,
       scene: undefined,
-      roomId,
       tableDataBlockId: DataBlockId.none,
-      dataBlockChache: {},
+      roomId,
+      dataBlockCache: {},
+      rendered: new Set(),
+      workboardDataBlockRenderer: WorkboardDataBlockRenderer.create(),
     };
   },
 
   run(context: Renderer) {
-    context.engine?.runRenderLoop(() => render(context));
+    context.engine?.runRenderLoop(() => {
+      if (context.tableDataBlockId === DataBlockId.none) return;
+      renderScene(context, context.tableDataBlockId);
+      context.scene?.render();
+    });
   },
 
   stop(context: Renderer) {
     context.engine?.stopRenderLoop();
   },
-};
-
-const getDataBlock = <T extends DataBlock>(
-  context: Renderer,
-  dataBlockId: DataBlockId,
-  typeChecker: (data: unknown) => data is T,
-) => {
-  if (context.dataBlockChache[dataBlockId]?.isChached) {
-    return context.dataBlockChache[dataBlockId]!.payload;
-  }
-
-  if (context.dataBlockChache[dataBlockId]) {
-    context.dataBlockChache[dataBlockId]!.isChached = true;
-  } else {
-    context.dataBlockChache[dataBlockId] = { isChached: true, payload: undefined };
-  }
-
-  DataBlockTableChannel.get(context.dataBlockTable, context.roomId, dataBlockId, typeChecker).then((dataBlock) => {
-    context.dataBlockChache[dataBlockId] = { isChached: true, payload: dataBlock };
-  });
-
-  return context.dataBlockChache[dataBlockId]!.payload;
-};
-
-const render = (context: Renderer) => {
-  const tableDataBlock = getDataBlock(context, context.tableDataBlockId, TableDataBlock.partialIs);
-
-  if (context.scene === undefined) {
-    const scene = new BABYLON.Scene(context.engine);
-    const camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 5, -10), scene);
-    camera.setTarget(BABYLON.Vector3.Zero());
-    const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
-    light.intensity = 0.7;
-    const sphere = BABYLON.MeshBuilder.CreateSphere('sphere', { diameter: 2, segments: 32 }, scene);
-    sphere.position.y = 1;
-    const ground = BABYLON.MeshBuilder.CreateGround('ground', { width: 6, height: 6 }, scene);
-
-    context.scene = scene;
-  }
-
-  context.scene!.clearColor = new BABYLON.Color4(0, 0, 0, 1);
-  context.scene!.render();
 };

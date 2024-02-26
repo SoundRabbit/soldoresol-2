@@ -15,13 +15,16 @@ export const RoomContext = React.createContext<Maybe<RoomContextData>>(undefined
 
 export const RoomProvider = ({ children }: { children?: React.ReactNode }) => {
   const { roomId } = useParams<{ roomId: string }>();
-  const [renderer, setRenderer] = useState<Maybe<TableRendererChannel>>(undefined);
+  const [rendererChannel, setRendererChannel] = useState<Maybe<TableRendererChannel>>(undefined);
 
-  const roomData = useMemo(() => (renderer ? { roomId, renderer } : undefined), [roomId, renderer]);
+  const roomData = useMemo(
+    () => (rendererChannel ? { roomId, renderer: rendererChannel } : undefined),
+    [roomId, rendererChannel],
+  );
 
   useEffect(() => {
     const renderer = TableRendererChannel.create();
-    setRenderer((prev) => {
+    setRendererChannel((prev) => {
       prev?.worker?.terminate();
       return renderer;
     });

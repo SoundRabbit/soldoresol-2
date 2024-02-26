@@ -9,6 +9,7 @@ import { DataBlockId } from '@/libs/dataBlock';
 import { GameDataBlock } from '@/libs/dataBlock/gameObject/gameDataBlock';
 import { SceneDataBlock } from '@/libs/dataBlock/gameObject/sceneDataBlock';
 import { TableDataBlock } from '@/libs/dataBlock/gameObject/tableDataBlock';
+import { WorkboardDataBlock } from '@/libs/dataBlock/tableObject/workboardDataBlock';
 import { TableRendererChannel } from '@/libs/tableRenderer';
 import { NonChildren } from '@/utils/utilityTypes';
 
@@ -24,7 +25,11 @@ export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, .
   const roomContext = useContext(RoomContext);
 
   const handleAddScene = useCallback(async () => {
-    const mainTable = TableDataBlock.create({ name: '新しいテーブル' });
+    const workboard = WorkboardDataBlock.create({ size: [10, 10] });
+    const workboardId = await setDataBlock(workboard);
+    if (workboardId === undefined) return;
+
+    const mainTable = TableDataBlock.create({ name: '新しいテーブル', workboardList: [workboardId] });
     const mainTableId = await setDataBlock(mainTable);
     if (mainTableId === undefined) return;
 
