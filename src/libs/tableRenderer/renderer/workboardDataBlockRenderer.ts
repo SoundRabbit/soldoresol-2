@@ -1,49 +1,66 @@
+'use client';
+
+import * as THREE from 'three';
+
 import { DataBlockId } from '@/libs/dataBlock';
 import { WorkboardDataBlock } from '@/libs/dataBlock/tableObject/workboardDataBlock';
-import { bgColor } from '@/utils/openColor';
+import { bgColor, txColor } from '@/utils/openColor';
 import { Maybe } from '@/utils/utilityTypes';
 
-import { GetDataBlock } from './_common';
+import { GetDataBlock, Rendered } from './_common';
 
 type AnnotMesh = {
   size: [number, number];
-  mesh: BABYLON.Mesh;
+  mesh: THREE.LineSegments;
   name: string;
   nameCanvas: OffscreenCanvas;
-  nameMesh: BABYLON.Mesh;
-  nameTexture: BABYLON.DynamicTexture;
+  nameMesh: THREE.Mesh;
+  nameTexture: THREE.CanvasTexture;
 };
+
+type GeometryTable = Record<string, Maybe<THREE.BufferGeometry>>;
 
 export type WorkboardDataBlockRenderer = {
   meshTable: Record<DataBlockId, Maybe<AnnotMesh>>;
+  geometryTable: GeometryTable;
 };
 
-const createMesh = ([w, h]: [number, number], workboardId: DataBlockId) => {
-  const lines = [] as BABYLON.Vector3[][];
+const sizeString = (size: [number, number]) => `${Math.round(size[0])},${Math.round(size[1])}`;
+
+const getGeometry = (geometryTable: GeometryTable, size: [number, number]) => {
+  const w = Math.round(size[0]);
+  const h = Math.round(size[1]);
+  const key = sizeString([w, h]);
+  if (geometryTable[key]) {
+    return {
+      geom: geometryTable[key]!,
+      size: [w, h] as [number, number],
+    };
+  }
+
+  const lines = [] as THREE.Vector3[][];
 
   for (let x = 0; x <= w; x++) {
-    lines.push([new BABYLON.Vector3(x - w * 0.5, 0, -h * 0.5), new BABYLON.Vector3(x - w * 0.5, 0, h * 0.5)]);
+    lines.push([new THREE.Vector3(x - w * 0.5, -h * 0.5, 0), new THREE.Vector3(x - w * 0.5, h * 0.5, 0)]);
   }
   for (let y = 0; y <= h; y++) {
-    lines.push([new BABYLON.Vector3(-w * 0.5, 0, y - h * 0.5), new BABYLON.Vector3(w * 0.5, 0, y - h * 0.5)]);
+    lines.push([new THREE.Vector3(-w * 0.5, y - h * 0.5, 0), new THREE.Vector3(w * 0.5, y - h * 0.5, 0)]);
   }
 
-  const mesh = BABYLON.MeshBuilder.CreateLineSystem(workboardId, { lines });
-  const color = bgColor.gray[4];
-  mesh.color = new BABYLON.Color3(color.red(), color.green(), color.blue());
+  const geom = new THREE.BufferGeometry().setFromPoints(lines.flat());
 
   return {
     size: [w, h] as [number, number],
-    mesh,
+    geom,
   };
 };
 
 const render = (
   context: WorkboardDataBlockRenderer,
-  rendered: Set<DataBlockId>,
+  rendered: Rendered,
   getDataBlock: GetDataBlock,
   workboardDataBlockIdList: DataBlockId[],
-  scene: BABYLON.Scene,
+  scene: THREE.Scene,
 ) => {
   for (const workboardId of workboardDataBlockIdList) {
     const { payload: workboard } = getDataBlock(workboardId, WorkboardDataBlock.partialIs);
@@ -54,30 +71,35 @@ const render = (
     const annotMesh = context.meshTable[workboardId];
 
     if (!annotMesh) {
-      const { mesh, size } = createMesh(workboard.size, workboardId);
+      const { geom, size } = getGeometry(context.geometryTable, workboard.size);
+      const mesh = new THREE.LineSegments(geom, new THREE.LineBasicMaterial({ color: 0x000000 }));
 
       const name = workboard.name;
 
-      const nameCanvas = new OffscreenCanvas(64, 64);
+      const canvasHeight = 128;
+      const canvasFont = `${canvasHeight - 8 * 2}px monospace`;
+
+      const nameCanvas = new OffscreenCanvas(canvasHeight, canvasHeight);
       const nameContext = nameCanvas.getContext('2d')!;
-      nameContext.font = '48px monospace';
-      const textWidth = nameContext!.measureText(name).width + 16;
-      nameCanvas.width = textWidth;
+      nameContext.font = canvasFont;
+      const canvasWidth = nameContext.measureText(name).width + 8 * 2;
+      nameCanvas.width = canvasWidth;
 
-      const nameTexture = new BABYLON.DynamicTexture(workboardId + '_nameTex', nameCanvas);
-      nameTexture.drawText(name, 8, 56, '48px monospace', 'black', 'white', true, true);
+      nameContext.fillStyle = bgColor.gray[0].hex();
+      nameContext.fillRect(0, 0, nameCanvas.width, nameCanvas.height);
+      nameContext.font = canvasFont;
+      nameContext.fillStyle = txColor.gray[4].hex();
+      nameContext.fillText(name, 8, canvasHeight - 8 * 2);
 
-      const nameMaterial = new BABYLON.StandardMaterial(workboardId + '_nameMat');
-      nameMaterial.diffuseTexture = nameTexture;
-      const nameMesh = BABYLON.MeshBuilder.CreateGround(workboardId + '_nameMesh', {
-        height: 1,
-        width: 1,
-      });
-      nameMesh.material = nameMaterial;
-      nameMesh.scaling.x = (textWidth / 64) * 0.5;
-      nameMesh.scaling.z = 0.5;
-      nameMesh.position.x = size[0] / 2 - nameMesh.scaling.x / 2;
-      nameMesh.position.z = -size[1] / 2 - nameMesh.scaling.z / 2;
+      const nameTexture = new THREE.CanvasTexture(nameCanvas);
+
+      const nameMaterial = new THREE.MeshBasicMaterial({ map: nameTexture });
+      const nameMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), nameMaterial);
+      const hScale = 0.5;
+      nameMesh.scale.x = (canvasWidth / canvasHeight) * hScale;
+      nameMesh.scale.y = hScale;
+      nameMesh.position.x = size[0] / 2 - nameMesh.scale.x / 2;
+      nameMesh.position.y = -size[1] / 2 - nameMesh.scale.y / 2;
 
       nameMesh.parent = mesh;
 
@@ -90,54 +112,45 @@ const render = (
         nameTexture,
       };
 
-      scene.addMesh(mesh);
-      if (name.length > 0) {
-        scene.addMesh(nameMesh);
-      }
+      scene.add(mesh);
+      scene.add(nameMesh);
     } else {
       if (annotMesh.size[0] !== workboard.size[0] || annotMesh.size[1] !== workboard.size[1]) {
-        if (annotMesh) {
-          scene.removeMesh(annotMesh.mesh);
-          annotMesh.mesh.dispose();
-        }
+        const { geom, size } = getGeometry(context.geometryTable, workboard.size);
 
-        const { mesh, size } = createMesh(workboard.size, workboardId);
-
-        annotMesh.mesh = mesh;
+        annotMesh.mesh.geometry = geom;
         annotMesh.size = size;
-        annotMesh.nameMesh.position.x = size[0] / 2 - annotMesh.nameMesh.scaling.x / 2;
-        annotMesh.nameMesh.position.z = -size[1] / 2 - annotMesh.nameMesh.scaling.z / 2;
-
-        scene.addMesh(mesh);
+        annotMesh.nameMesh.position.x = size[0] / 2 - annotMesh.nameMesh.scale.x / 2;
+        annotMesh.nameMesh.position.z = size[1] / 2 - annotMesh.nameMesh.scale.z / 2;
       }
       if (annotMesh.name !== workboard.name) {
-        if (workboard.name.length === 0) {
-          scene.removeMesh(annotMesh.nameMesh);
-        } else {
-          const name = workboard.name;
-          const nameContext = annotMesh.nameCanvas.getContext('2d')!;
-          nameContext.font = '48px monospace';
-          const textWidth = nameContext!.measureText(name).width;
-          annotMesh.nameCanvas.width = textWidth + 16;
-          annotMesh.nameTexture.drawText(name, 8, 56, '48px monospace', 'black', 'white', true, true);
-          annotMesh.nameMesh.scaling.x = textWidth / 64;
+        const name = workboard.name;
 
-          if (annotMesh.name.length === 0) {
-            scene.addMesh(annotMesh.nameMesh);
-          }
-        }
+        const nameContext = annotMesh.nameCanvas.getContext('2d')!;
+        nameContext.font = '48px monospace';
+        const textWidth = nameContext.measureText(name).width;
+        annotMesh.nameCanvas.width = textWidth + 16;
+        nameContext.fillText(name, 8, 56);
+
+        annotMesh.nameTexture.needsUpdate = true;
+
+        annotMesh.nameMesh.scale.x = (textWidth / 64) * annotMesh.nameMesh.scale.z;
+        annotMesh.nameMesh.position.x = annotMesh.size[0] / 2 - annotMesh.nameMesh.scale.x / 2;
+        annotMesh.nameMesh.position.y = -annotMesh.size[1] / 2 - annotMesh.nameMesh.scale.z / 2;
 
         annotMesh.name = workboard.name;
       }
     }
 
-    rendered.add(workboardId);
+    const { mesh, nameMesh } = context.meshTable[workboardId]!;
+    rendered[mesh.uuid] = mesh;
+    rendered[nameMesh.uuid] = nameMesh;
   }
 };
 
 export const WorkboardDataBlockRenderer = {
   create(): WorkboardDataBlockRenderer {
-    return { meshTable: {} };
+    return { meshTable: {}, geometryTable: {} };
   },
   render,
 };

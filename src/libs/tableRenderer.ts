@@ -24,6 +24,7 @@ export const TableRendererChannel = {
       if (typeof Worker !== 'undefined') {
         return new Worker(new URL('@/libs/tableRenderer/worker.ts', import.meta.url), {
           name: 'tableRenderer',
+          type: 'module',
         });
       } else {
         return undefined;
@@ -37,6 +38,7 @@ export const TableRendererChannel = {
   },
 
   run(context: TableRendererChannel, table: DataBlockTableChannel, roomId: string, canvas: OffscreenCanvas) {
+    console.log('run renderer');
     const channel = new MessageChannel();
     DataBlockTableChannel.setPort(table, channel.port1);
     context.worker?.postMessage(RunRenderer.create({ roomId, canvas, port: channel.port2 }), [canvas, channel.port2]);

@@ -1,15 +1,14 @@
 'use client';
 
+import * as THREE from 'three';
+
 import { DataBlock, DataBlockId } from '@/libs/dataBlock';
 import { TableDataBlock } from '@/libs/dataBlock/gameObject/tableDataBlock';
 import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 import { Maybe } from '@/utils/utilityTypes';
 
+import { Rendered } from './renderer/_common';
 import { WorkboardDataBlockRenderer } from './renderer/workboardDataBlockRenderer';
-
-importScripts('https://cdn.babylonjs.com/babylon.js');
-
-type BABYLON = typeof import('babylonjs');
 
 type AnnotDataBlock = {
   payload: Maybe<DataBlock>;
@@ -19,17 +18,22 @@ type AnnotDataBlock = {
 
 type DataBlockCache = Record<DataBlockId, Maybe<AnnotDataBlock>>;
 
+type TableScene = {
+  scene: THREE.Scene;
+  rendered: Rendered;
+};
+
 export type Renderer = {
   dataBlockTable: DataBlockTableChannel;
-  engine: BABYLON.Engine;
+  three: THREE.WebGLRenderer;
+  isRunning: boolean;
 
   roomId: string;
   tableDataBlockId: DataBlockId;
   dataBlockCache: DataBlockCache;
-  rendered: Set<DataBlockId>;
 
-  camera: Maybe<BABYLON.FreeCamera>;
-  tableScene: Record<DataBlockId, Maybe<BABYLON.Scene>>;
+  camera: Maybe<THREE.Camera>;
+  tableScene: Record<DataBlockId, Maybe<TableScene>>;
   workboardDataBlockRenderer: WorkboardDataBlockRenderer;
 };
 
@@ -86,26 +90,28 @@ const renderScene = (context: Renderer, tableDataBlockId: DataBlockId) => {
 
   reasetCacheMark(context);
 
-  const rendered = new Set<DataBlockId>();
+  const rendered = {} as Rendered;
 
-  if (!context.tableScene[tableDataBlockId]) {
-    const scene = new BABYLON.Scene(context.engine);
-
-    const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0));
-    light.intensity = 0.7;
-    if (!context.camera) {
-      const camera = new BABYLON.FreeCamera('mainCamera', new BABYLON.Vector3(5, 15, -15));
-      camera.setTarget(BABYLON.Vector3.Zero());
-      context.camera = camera;
-    }
-    scene.addCamera(context.camera);
-    scene.addLight(light);
-    scene.activeCamera = context.camera;
-
-    context.tableScene[tableDataBlockId] = scene;
+  if (!context.camera) {
+    const size = new THREE.Vector2();
+    context.three.getSize(size);
+    const camera = new THREE.PerspectiveCamera(75, size.x / size.y, 0.1, 1000);
+    camera.position.set(5, -10, 10);
+    camera.up.set(0, 0, 1);
+    camera.lookAt(0, 0, 0);
+    context.camera = camera;
   }
 
-  const scene = context.tableScene[tableDataBlockId]!;
+  if (!context.tableScene[tableDataBlockId]) {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    context.tableScene[tableDataBlockId] = {
+      scene,
+      rendered: {},
+    };
+  }
+
+  const scene = context.tableScene[tableDataBlockId]!.scene;
 
   const { payload: tableDataBlock } = getDataBlock(context, tableDataBlockId, TableDataBlock.partialIs);
 
@@ -119,25 +125,28 @@ const renderScene = (context: Renderer, tableDataBlockId: DataBlockId) => {
       scene,
     );
   }
+
+  for (const [id, sceneObject] of Object.entries(context.tableScene[tableDataBlockId]!.rendered)) {
+    if (!rendered[id] && sceneObject) {
+      scene.remove(sceneObject);
+    }
+  }
+  context.tableScene[tableDataBlockId]!.rendered = rendered;
 };
 
 export const Renderer = {
-  create(
-    roomId: string,
-    canvas: BABYLON.Nullable<HTMLCanvasElement | OffscreenCanvas | WebGLRenderingContext | WebGL2RenderingContext>,
-    port?: MessagePort,
-  ): Renderer {
+  create(roomId: string, canvas: HTMLCanvasElement | OffscreenCanvas, port?: MessagePort): Renderer {
     const dataBlockTable = DataBlockTableChannel.create(port);
     const antiAliasing = false;
-    const engine = new BABYLON.Engine(canvas, antiAliasing, { preserveDrawingBuffer: true, stencil: true });
+    const three = new THREE.WebGLRenderer({ canvas, antialias: antiAliasing });
 
     return {
       dataBlockTable,
-      engine,
-      tableDataBlockId: DataBlockId.none,
+      three,
+      isRunning: false,
       roomId,
+      tableDataBlockId: DataBlockId.none,
       dataBlockCache: {},
-      rendered: new Set(),
       camera: undefined,
       tableScene: {},
       workboardDataBlockRenderer: WorkboardDataBlockRenderer.create(),
@@ -145,16 +154,25 @@ export const Renderer = {
   },
 
   run(context: Renderer) {
-    context.engine?.runRenderLoop(() => {
+    const renderLoop = () => {
+      if (context.isRunning === false) return;
+
+      requestAnimationFrame(renderLoop);
+
       const tableDataBlockId = context.tableDataBlockId;
       if (tableDataBlockId === DataBlockId.none) return;
 
       renderScene(context, tableDataBlockId);
-      context.tableScene[tableDataBlockId]?.render();
-    });
+      if (context.camera && context.tableScene[tableDataBlockId]) {
+        context.three.render(context.tableScene[tableDataBlockId]!.scene, context.camera);
+      }
+    };
+
+    context.isRunning = true;
+    requestAnimationFrame(renderLoop);
   },
 
   stop(context: Renderer) {
-    context.engine?.stopRenderLoop();
+    context.isRunning = false;
   },
 };

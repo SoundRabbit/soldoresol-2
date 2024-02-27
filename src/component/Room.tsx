@@ -90,3 +90,5 @@ export const Room: React.FC<RoomProps> = ({ gameDataBlockId, chatDataBlockId, ..
     </Flex>
   );
 };
+
+export default Room;
