@@ -7,7 +7,16 @@
   "jsxSingleQuote": true,
   "printWidth": 120,
   "experimentalTernaries": true,
-  "importOrder": ["^[^@.](.*)$", "^@[^/](.*)$", "^@/(.*)$", "^\\.\\./(.*)$", "^\\./(.*)$"],
+  "importOrder": [
+    "^[^@.](.*)$",
+    "^@[^/](.*)$",
+    "^@/app/(.*)$",
+    "^@/component/(.*)$",
+    "^@/lib/(.*)$",
+    "^@/(.*)$",
+    "^\\.\\./(.*)$",
+    "^\\./(.*)$"
+  ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
   "importOrderGroupNamespaceSpecifiers": true,
