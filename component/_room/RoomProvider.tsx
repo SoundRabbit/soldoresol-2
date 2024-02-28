@@ -1,5 +1,3 @@
-'use client';
-
 import { RoomContextProvider } from '@/component/context/RoomContext';
 
 export type RoomProviderProps = {

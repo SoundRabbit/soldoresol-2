@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { MenuDivider, MenuGroup, MenuItem, useDisclosure } from '@chakra-ui/react';

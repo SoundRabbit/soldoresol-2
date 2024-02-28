@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useCallback } from 'react';
 
 import { ToggleButton, ToggleButtonProps } from '@/component/ToggleButton';

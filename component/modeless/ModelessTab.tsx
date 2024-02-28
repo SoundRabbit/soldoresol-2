@@ -1,3 +1,5 @@
+'use client';
+
 import * as t from 'io-ts';
 import React, { useCallback, useMemo } from 'react';
 

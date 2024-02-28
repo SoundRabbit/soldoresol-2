@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useCallback, useContext, useMemo } from 'react';
 
 import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';

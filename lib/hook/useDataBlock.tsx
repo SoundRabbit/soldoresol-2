@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import useSWRInfinite, { unstable_serialize } from 'swr/infinite';
