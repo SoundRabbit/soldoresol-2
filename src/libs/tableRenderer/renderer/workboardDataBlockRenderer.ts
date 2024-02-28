@@ -72,7 +72,8 @@ const render = (
 
     if (!annotMesh) {
       const { geom, size } = getGeometry(context.geometryTable, workboard.size);
-      const mesh = new THREE.LineSegments(geom, new THREE.LineBasicMaterial({ color: 0x000000 }));
+      const mesh = new THREE.LineSegments(geom, new THREE.LineBasicMaterial({ color: bgColor.gray[4].rgbNumber() }));
+      mesh.userData = { dataBlockId: workboardId };
 
       const name = workboard.name;
 
@@ -95,6 +96,7 @@ const render = (
 
       const nameMaterial = new THREE.MeshBasicMaterial({ map: nameTexture });
       const nameMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), nameMaterial);
+      nameMesh.userData = { dataBlockId: workboardId };
       const hScale = 0.5;
       nameMesh.scale.x = (canvasWidth / canvasHeight) * hScale;
       nameMesh.scale.y = hScale;
@@ -126,11 +128,20 @@ const render = (
       if (annotMesh.name !== workboard.name) {
         const name = workboard.name;
 
-        const nameContext = annotMesh.nameCanvas.getContext('2d')!;
+        const canvasHeight = annotMesh.nameCanvas.height;
+        const canvasFont = `${canvasHeight - 8 * 2}px monospace`;
+
+        const nameCanvas = annotMesh.nameCanvas;
+        const nameContext = nameCanvas.getContext('2d')!;
         nameContext.font = '48px monospace';
         const textWidth = nameContext.measureText(name).width;
-        annotMesh.nameCanvas.width = textWidth + 16;
-        nameContext.fillText(name, 8, 56);
+        nameCanvas.width = textWidth + 16;
+
+        nameContext.fillStyle = bgColor.gray[0].hex();
+        nameContext.fillRect(0, 0, nameCanvas.width, nameCanvas.height);
+        nameContext.font = canvasFont;
+        nameContext.fillStyle = txColor.gray[4].hex();
+        nameContext.fillText(name, 8, canvasHeight - 8 * 2);
 
         annotMesh.nameTexture.needsUpdate = true;
 

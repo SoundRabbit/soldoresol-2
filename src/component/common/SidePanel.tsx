@@ -5,8 +5,11 @@ import React, { useCallback, useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { Button, Flex, FlexProps } from '@chakra-ui/react';
 
-export type SidePanelProps = FlexProps & {
+import { NonChildren } from '@/utils/utilityTypes';
+
+export type SidePanelProps = NonChildren<FlexProps> & {
   panelPposition: 'left' | 'right';
+  children: (isOpened: boolean) => FlexProps['children'];
 };
 
 export const SidePanel: React.FC<SidePanelProps> = ({ panelPposition, children, ...props }) => {
@@ -23,7 +26,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ panelPposition, children, 
           <ChevronLeftIcon />
         </Flex>
       : null}
-      {isOpened ? children : null}
+      {children(isOpened)}
       {panelPposition === 'left' ?
         <Flex as={Button} height={'auto'} onClick={handleToggle}>
           <ChevronRightIcon />

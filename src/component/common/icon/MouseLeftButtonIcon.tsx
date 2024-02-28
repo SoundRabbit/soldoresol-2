@@ -17,6 +17,27 @@ export const MouseLeftButtonIcon: React.FC<MouseLeftButtonIconProps> = ({ color,
 		      c18.687,0.015,35.416,7.516,47.689,19.751c12.234,12.273,19.736,28.995,19.743,47.689V259.431z'
         fill={color ?? 'currentColor'}
       ></path>
+      <rect x='216.683' y='0' width='24.276' height='69.799' fill={color ?? 'currentColor'}></rect>
+      <polygon
+        points='330.001,30.359 308.969,18.217 274.07,78.672 295.101,90.808'
+        fill={color ?? 'currentColor'}
+      ></polygon>
+      <polygon
+        points='47.503,193.463 117.295,193.463 117.295,169.187 47.497,169.179'
+        fill={color ?? 'currentColor'}
+      ></polygon>
+      <rect
+        x='67.116'
+        y='95.968'
+        transform='matrix(-0.866 -0.5 0.5 -0.866 136.3088 252.7445)'
+        width='69.8'
+        height='24.284'
+        fill={color ?? 'currentColor'}
+      ></rect>
+      <polygon
+        points='183.572,78.672 148.679,18.217 127.649,30.367 162.541,90.808'
+        fill={color ?? 'currentColor'}
+      ></polygon>
     </Icon>
   );
 };

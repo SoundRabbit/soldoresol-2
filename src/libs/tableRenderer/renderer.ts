@@ -7,6 +7,7 @@ import { TableDataBlock } from '@/libs/dataBlock/gameObject/tableDataBlock';
 import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 import { Maybe } from '@/utils/utilityTypes';
 
+import { Camera } from './camera';
 import { Rendered } from './renderer/_common';
 import { WorkboardDataBlockRenderer } from './renderer/workboardDataBlockRenderer';
 
@@ -32,7 +33,8 @@ export type Renderer = {
   tableDataBlockId: DataBlockId;
   dataBlockCache: DataBlockCache;
 
-  camera: Maybe<THREE.Camera>;
+  camera: Maybe<THREE.PerspectiveCamera>;
+  rayCaster: THREE.Raycaster;
   tableScene: Record<DataBlockId, Maybe<TableScene>>;
   workboardDataBlockRenderer: WorkboardDataBlockRenderer;
 };
@@ -96,9 +98,9 @@ const renderScene = (context: Renderer, tableDataBlockId: DataBlockId) => {
     const size = new THREE.Vector2();
     context.three.getSize(size);
     const camera = new THREE.PerspectiveCamera(75, size.x / size.y, 0.1, 1000);
-    camera.position.set(5, -10, 10);
-    camera.up.set(0, 0, 1);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(Camera.initialPosition.x, Camera.initialPosition.y, Camera.initialPosition.z);
+    camera.rotation.set(Camera.initialRotation.x, Camera.initialRotation.y, Camera.initialRotation.z);
+    camera.rotation.order = Camera.initialRotation.order;
     context.camera = camera;
   }
 
@@ -148,6 +150,7 @@ export const Renderer = {
       tableDataBlockId: DataBlockId.none,
       dataBlockCache: {},
       camera: undefined,
+      rayCaster: new THREE.Raycaster(),
       tableScene: {},
       workboardDataBlockRenderer: WorkboardDataBlockRenderer.create(),
     };
@@ -174,5 +177,47 @@ export const Renderer = {
 
   stop(context: Renderer) {
     context.isRunning = false;
+  },
+
+  intersectList(
+    context: Renderer,
+    position: [number, number],
+    tableDataBlockId?: DataBlockId,
+  ): { dataBlockId?: DataBlockId; position: [number, number, number] }[] {
+    const tableScene = context.tableScene[tableDataBlockId ?? context.tableDataBlockId];
+    if (!tableScene) return [];
+
+    const camera = context.camera;
+    if (!camera) return [];
+
+    const mouse = new THREE.Vector2(...position);
+    const rayCaster = context.rayCaster;
+    rayCaster.setFromCamera(mouse, camera);
+
+    const intersectDataBlockIdList = [] as { dataBlockId?: DataBlockId; position: [number, number, number] }[];
+    const intersectObjectList = rayCaster.intersectObjects(tableScene.scene.children, true);
+    const alreadyIntersectDataBlockIdSet = new Set<DataBlockId>();
+    for (const intersectObject of intersectObjectList) {
+      if (intersectObject.object.userData.dataBlockId) {
+        const dataBlockId =
+          typeof intersectObject.object.userData.dataBlockId === 'string' ?
+            intersectObject.object.userData.dataBlockId
+          : undefined;
+
+        if (dataBlockId) {
+          if (alreadyIntersectDataBlockIdSet.has(dataBlockId)) {
+            continue;
+          }
+          alreadyIntersectDataBlockIdSet.add(dataBlockId);
+        }
+
+        intersectDataBlockIdList.push({
+          dataBlockId,
+          position: [intersectObject.point.x, intersectObject.point.y, intersectObject.point.z],
+        });
+      }
+    }
+
+    return intersectDataBlockIdList;
   },
 };

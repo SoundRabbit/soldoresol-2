@@ -1,12 +1,18 @@
 'use client';
 
+import { EulerOrder } from 'three';
+import { v4 as uuidv4 } from 'uuid';
+
 import { DataBlockId } from '@/libs/dataBlock';
 import { DataBlockTableChannel } from '@/libs/dataBlockTable';
 import { Maybe } from '@/utils/utilityTypes';
 
 import { Renderer } from './tableRenderer/renderer';
 import {
+  GetIntersect,
+  GetIntersectResponse,
   RunRenderer,
+  SetCameraPosition,
   SetCanvasSize,
   SetDataBlockTablePort,
   SetTableDataBlockId,
@@ -46,6 +52,32 @@ export const TableRendererChannel = {
 
   stop(context: TableRendererChannel) {
     context.worker?.postMessage(StopRenderer.create({}));
+  },
+
+  getIntersect(
+    context: TableRendererChannel,
+    position: [number, number],
+    tableDataBlockId?: DataBlockId,
+  ): Promise<Pick<GetIntersectResponse, 'camera' | 'intersect'>> {
+    return new Promise((resolve) => {
+      const sessionId = uuidv4();
+      const listener = (e: MessageEvent) => {
+        const data = e.data;
+        if (GetIntersectResponse.is(data) && data.sessionId === sessionId) {
+          context.worker?.removeEventListener('message', listener);
+          resolve({ intersect: data.intersect, camera: data.camera });
+        }
+      };
+      context.worker?.addEventListener('message', listener);
+      context.worker?.postMessage(GetIntersect.create({ sessionId, position, tableBlockId: tableDataBlockId }));
+    });
+  },
+
+  setCameraPosition(
+    context: TableRendererChannel,
+    props: { position?: [number, number, number]; rotation?: { euler: [number, number, number]; order: EulerOrder } },
+  ) {
+    context.worker?.postMessage(SetCameraPosition.create({ ...props }));
   },
 
   setCanvasSize(context: TableRendererChannel, [width, height]: [number, number]) {
