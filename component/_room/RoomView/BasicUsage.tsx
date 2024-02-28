@@ -33,10 +33,11 @@ export const BasicUsage: React.FC<BasicUsageProps> = (props) => {
   }, []);
 
   return (
-    <Flex direction={'column'} alignItems={'flex-end'} backgroundColor={bgColor.gray[0].hex()} {...props}>
+    <Flex direction={'column'} alignItems={'flex-end'} {...props}>
       {isOpened && (
         <KeyValue
           border={`1px solid ${bgColor.blue[4].hex()}`}
+          backgroundColor={bgColor.gray[0].hex()}
           marginBottom={'0.5em'}
           pointerEvents={'none'}
           userSelect={'none'}
