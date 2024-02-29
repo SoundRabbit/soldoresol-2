@@ -5,7 +5,7 @@ import React, { useCallback, useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { Button, Flex, FlexProps } from '@chakra-ui/react';
 
-import { NonChildren } from '@/lib/util/utilityTypes';
+import { NonChildren } from '@/lib/type/utilityTypes';
 
 export type SidePanelProps = NonChildren<FlexProps> & {
   panelPposition: 'left' | 'right';

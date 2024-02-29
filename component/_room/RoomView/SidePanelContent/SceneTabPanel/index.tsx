@@ -14,7 +14,7 @@ import { TableDataBlock } from '@/lib/dataBlock/gameObject/tableDataBlock';
 import { WorkboardDataBlock } from '@/lib/dataBlock/tableObject/workboardDataBlock';
 import { useDataBlock, useDataBlockTable } from '@/lib/hook/useDataBlock';
 import { TableRendererChannel } from '@/lib/tableRenderer';
-import { NonChildren } from '@/lib/util/utilityTypes';
+import { NonChildren } from '@/lib/type/utilityTypes';
 
 import { SceneListItem } from './SceneListItem';
 

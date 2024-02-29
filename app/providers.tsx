@@ -1,14 +1,18 @@
 'use client';
 
+import { RecoilRoot } from 'recoil';
+
 import { ChakraProvider } from '@chakra-ui/react';
 
 import { DataBlockTableContextProvider } from '@/component/context/DataBlockTableContext';
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
-    <DataBlockTableContextProvider>
-      <ChakraProvider>{children}</ChakraProvider>
-    </DataBlockTableContextProvider>
+    <RecoilRoot>
+      <DataBlockTableContextProvider>
+        <ChakraProvider>{children}</ChakraProvider>
+      </DataBlockTableContextProvider>
+    </RecoilRoot>
   );
 };
 

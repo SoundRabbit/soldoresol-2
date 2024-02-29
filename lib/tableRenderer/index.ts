@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { DataBlockTableChannel } from '@/lib/dataBlockTable';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 import { Renderer } from './renderer';
 import {
@@ -42,7 +42,6 @@ export const TableRendererChannel = {
   },
 
   run(context: TableRendererChannel, table: DataBlockTableChannel, roomId: string, canvas: OffscreenCanvas) {
-    console.log('run renderer');
     const channel = new MessageChannel();
     DataBlockTableChannel.setPort(table, channel.port1);
     context.worker?.postMessage(RunRenderer.create({ roomId, canvas, port: channel.port2 }), [canvas, channel.port2]);

@@ -1,37 +1,36 @@
-'use client';
-
-import { useCallback, useMemo } from 'react';
-import useSWR from 'swr';
+import { useMemo } from 'react';
+import { atomFamily, useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { DataBlockId } from '@/lib/dataBlock';
-import { useSetState } from '@/lib/hook/useSetState';
 import { useTabIndex } from '@/lib/hook/useTabIndex';
 
-const SWR_KEY = 'local/modelessTab';
+const RECOIL_KEY = 'component/_room/RoomView/modelessContent/chat/useChatModelessTab';
 
-export const useSelectedChannelId = (tabId: string, channelIdList?: DataBlockId[]) => {
-  const swrKey = [SWR_KEY, tabId, 'selectedChannelId'];
+const selectedChannelIdState = atomFamily<DataBlockId, string>({
+  key: RECOIL_KEY + 'selectedChannelIdState',
+  default: DataBlockId.none,
+});
 
-  const { data: maybeSelectedChannelId, mutate: mutateSelectedChannelId } = useSWR<DataBlockId>(swrKey, null);
+export const useSelectedChannelIdValue = (contentId: string, channelIdList?: DataBlockId[]) => {
+  const maybeSelectedChannelId = useRecoilValue(selectedChannelIdState(contentId));
+
   const selectedChannelId = useMemo(
-    () => maybeSelectedChannelId ?? channelIdList?.at(0) ?? DataBlockId.none,
+    () =>
+      maybeSelectedChannelId !== DataBlockId.none ? maybeSelectedChannelId : channelIdList?.at(0) ?? DataBlockId.none,
     [maybeSelectedChannelId, channelIdList],
   );
 
-  const setSelectedChannelIdWithCallback = useCallback(
-    (callback: (prevId: DataBlockId) => DataBlockId) => {
-      mutateSelectedChannelId((prevId) => callback(prevId ?? DataBlockId.none), { revalidate: false });
-    },
-    [mutateSelectedChannelId],
-  );
-
-  const setSelectedChannelId = useSetState(setSelectedChannelIdWithCallback);
-
-  return { selectedChannelId, setSelectedChannelId };
+  return { selectedChannelId };
 };
 
-export const useSelectedChannelIdWithTabIndex = (tabId: string, channelIdList: DataBlockId[]) => {
-  const { selectedChannelId: maybeSelectedChannelId, setSelectedChannelId } = useSelectedChannelId(tabId);
+export const useSetSelectedChannelId = (contentId: string) => {
+  const setSelectedChannelId = useSetRecoilState(selectedChannelIdState(contentId));
+
+  return { setSelectedChannelId };
+};
+
+export const useSelectedChannelIdValueWithTabIndex = (tabId: string, channelIdList: DataBlockId[]) => {
+  const { selectedChannelId: maybeSelectedChannelId } = useSelectedChannelIdValue(tabId);
   const tabIndex = useTabIndex(maybeSelectedChannelId, channelIdList);
 
   const selectedChannelId = useMemo(
@@ -42,29 +41,5 @@ export const useSelectedChannelIdWithTabIndex = (tabId: string, channelIdList: D
     [maybeSelectedChannelId, channelIdList, tabIndex],
   );
 
-  return { selectedChannelId, setSelectedChannelId, tabIndex };
-};
-
-export const useSelectedTargetChannelIdList = (tabId: string) => {
-  const swrKey = [SWR_KEY, tabId, 'selectedTargetChannelList'];
-
-  const { data: maybeSelectedTargetChannelIdList, mutate: mutateSelectedTargetChannelIdList } = useSWR<DataBlockId[]>(
-    swrKey,
-    null,
-  );
-  const selectedTargetChannelIdList = useMemo(
-    () => maybeSelectedTargetChannelIdList ?? [],
-    [maybeSelectedTargetChannelIdList],
-  );
-
-  const setSelectedTargetChannelIdListWithCallback = useCallback(
-    (callback: (prevList: DataBlockId[]) => DataBlockId[]) => {
-      mutateSelectedTargetChannelIdList((prevList) => callback(prevList ?? []), { revalidate: false });
-    },
-    [mutateSelectedTargetChannelIdList],
-  );
-
-  const setSelectedTargetChannelIdList = useSetState(setSelectedTargetChannelIdListWithCallback);
-
-  return { selectedTargetChannelIdList, setSelectedTargetChannelIdList };
+  return { selectedChannelId, tabIndex };
 };

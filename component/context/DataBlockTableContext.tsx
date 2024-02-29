@@ -3,7 +3,7 @@
 import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataBlockTableChannel } from '@/lib/dataBlockTable';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 export type DataBlockTableContextMutData = {
   getKeyList: ((index: number) => any)[];

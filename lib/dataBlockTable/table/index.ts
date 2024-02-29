@@ -1,7 +1,7 @@
 'use client';
 
 import { DataBlock, DataBlockId } from '@/lib/dataBlock';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 import { AnnotDataBlock } from './annotDataBlock';
 

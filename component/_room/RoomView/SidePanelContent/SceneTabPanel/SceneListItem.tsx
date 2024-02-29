@@ -7,7 +7,7 @@ import { Flex, FlexProps } from '@chakra-ui/react';
 import { DataBlockId } from '@/lib/dataBlock';
 import { SceneDataBlock } from '@/lib/dataBlock/gameObject/sceneDataBlock';
 import { useDataBlock } from '@/lib/hook/useDataBlock';
-import { NonChildren } from '@/lib/util/utilityTypes';
+import { NonChildren } from '@/lib/type/utilityTypes';
 
 export type SceneListItemProps = NonChildren<FlexProps> & {
   sceneDataBlockId: DataBlockId;

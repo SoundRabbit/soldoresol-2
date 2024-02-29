@@ -9,8 +9,8 @@ import { KeyValue } from '@/component/KeyValue';
 import { MouseLeftButtonIcon } from '@/component/icon/MouseLeftButtonIcon';
 import { MouseRightButtonIcon } from '@/component/icon/MouseRightButtonIcon';
 
+import { NonChildren } from '@/lib/type/utilityTypes';
 import { bgColor, txColor } from '@/lib/util/openColor';
-import { NonChildren } from '@/lib/util/utilityTypes';
 
 export type BasicUsageProps = NonChildren<FlexProps>;
 

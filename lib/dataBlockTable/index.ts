@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataBlock, DataBlockId } from '@/lib/dataBlock';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 import {
   GetDataBlock,

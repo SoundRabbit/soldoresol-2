@@ -1,4 +1,4 @@
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 import { Renderer } from '../renderer';
 

@@ -13,38 +13,38 @@ import { OnMoveTab, parseDataTransfer } from '../ModelessTab';
 import { ModelessMenuItems } from './ModelessMenuItems';
 import { ModelessRnd, ModelessRndController, ModelessRndProps, defaultModelessRndController } from './ModelessRnd';
 
-export type ModelessTabProps = {
+export type ModelessContentTabProps = {
   modelessId: string;
-  tabId: string;
+  contentId: string;
   tabIndex: number;
-  selectedTabId: string;
-  setSelectedTabId: (tabId: string) => void;
+  isSelected: boolean;
+  onSelectTab: (contentId: string) => void;
   onMoveTab: OnMoveTab;
 };
 
-export type ModelessMenuProps = {
+export type ModelessContentMenuProps = {
   modelessId: string;
-  tabId: string;
+  contentId: string;
 };
 
-export type ModelessContentProps = {
+export type ModelessContentPanelProps = {
   modelessId: string;
-  tabId: string;
+  contentId: string;
 };
 
-export type ModelessTab = {
-  tabId: string;
-  renderTab: (props: ModelessTabProps) => JSX.Element;
-  renderMenu: (props: ModelessMenuProps) => JSX.Element;
-  renderContent: (props: ModelessContentProps) => JSX.Element;
+export type ModelessContent = {
+  contentId: string;
+  renderTab: (props: ModelessContentTabProps) => JSX.Element;
+  renderMenu: (props: ModelessContentMenuProps) => JSX.Element;
+  renderPanel: (props: ModelessContentPanelProps) => JSX.Element;
 };
 
 export type ModelessController = {
   [modelessId: string]: {
-    removeTab: (tabId: string, closeSelf?: boolean) => [ModelessTab | undefined, number];
-    insertTab: (tab: ModelessTab, index?: number) => void;
-    moveTab: (srcTabId: string, dstTabIndex: number) => void;
-    pushTabList: (tabList: ModelessTab[]) => void;
+    removeTab: (contentId: string, closeSelf?: boolean) => [ModelessContent | undefined, number];
+    insertTab: (content: ModelessContent, index?: number) => void;
+    moveTab: (srcContentId: string, dstTabIndex: number) => void;
+    pushTabList: (contentList: ModelessContent[]) => void;
     getZIndex: () => number;
     setZIndex: (zIndex: number) => void;
   };
@@ -79,12 +79,15 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
 
     const [isSnapToGrid, setIsSnapToGrid] = useState<boolean>(false);
 
-    const [tabList, tabListRef, setTabList] = useRefState<ModelessTab[]>([]);
+    const [contentList, contentListRef, setContentList] = useRefState<ModelessContent[]>([]);
 
-    const [selectedTabId, setSelectedTabId] = useState<string>('');
-    const selectedTab = useMemo(() => tabList.find((tab) => tab.tabId === selectedTabId), [tabList, selectedTabId]);
+    const [selectedContentId, selectedContentIdRef, setSelectedContentId] = useRefState<string>('');
+    const selectedContent = useMemo(
+      () => contentList.find((content) => content.contentId === selectedContentId),
+      [contentList, selectedContentId],
+    );
 
-    const tabListLength = useMemo(() => tabList.length, [tabList]);
+    const tabListLength = useMemo(() => contentList.length, [contentList]);
 
     const handleToggleSnapToGrid = useCallback(() => {
       setIsSnapToGrid((prev) => {
@@ -105,41 +108,38 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
         if (srcDataTransfer) {
           e.preventDefault();
           e.stopPropagation();
-          onMoveTab(srcDataTransfer.modelessId, modelessId, srcDataTransfer.tabId, tabListLength);
+          onMoveTab(srcDataTransfer.modelessId, modelessId, srcDataTransfer.contentId, tabListLength);
         }
       },
-      [modelessId, onMoveTab, tabListLength],
+      [onMoveTab, tabListLength, modelessId],
     );
 
     const handleCloseTab = useCallback(
       (tabId: string) => {
-        setTabList((tabList) => {
-          const removeTabIndex = tabList.findIndex((tab) => tab.tabId === tabId);
-          if (removeTabIndex !== -1) {
-            const newTabList = tabList.filter((tab) => tab.tabId !== tabId);
-            if (newTabList.length === 0) {
-              onCloseModeless(modelessId);
+        const removingTabIndex = contentListRef.current.findIndex((content) => content.contentId === tabId);
+        if (removingTabIndex === -1) return;
+
+        const newContentList = contentListRef.current.filter((content) => content.contentId !== tabId);
+        if (newContentList.length === 0) {
+          onCloseModeless(modelessId);
+        } else {
+          setSelectedContentId((selectedContentId) => {
+            if (selectedContentId === tabId) {
+              return newContentList.at(removingTabIndex)?.contentId || newContentList[removingTabIndex - 1].contentId;
             } else {
-              setSelectedTabId((selectedTabId) => {
-                if (selectedTabId === tabId) {
-                  return newTabList.at(removeTabIndex)?.tabId || newTabList[removeTabIndex - 1].tabId;
-                } else {
-                  return selectedTabId;
-                }
-              });
+              return selectedContentId;
             }
-            return newTabList;
-          } else {
-            return tabList;
-          }
-        });
+          });
+        }
+
+        setContentList(newContentList);
       },
-      [modelessId, onCloseModeless, setTabList],
+      [onCloseModeless, setContentList, setSelectedContentId, contentListRef, modelessId],
     );
 
     const handleCloseSelectedTab = useCallback(() => {
-      handleCloseTab(selectedTabId);
-    }, [handleCloseTab, selectedTabId]);
+      handleCloseTab(selectedContentIdRef.current);
+    }, [handleCloseTab, selectedContentIdRef]);
 
     const handleFocusSelf = useCallback(() => {
       onFocusModeless(modelessId);
@@ -159,59 +159,64 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
       ref,
       () => ({
         [modelessId]: {
-          removeTab: (tabId: string) => {
-            const removeTabIndex = tabListRef.current.findIndex((tab) => tab.tabId === tabId);
-            if (removeTabIndex === -1) return [undefined, -1];
-            const removedTab = tabListRef.current[removeTabIndex];
-            const newTabList = tabListRef.current.filter((tab) => tab.tabId !== tabId);
-            if (newTabList.length === 0) {
+          removeTab: (contentId: string) => {
+            const removingTabIndex = contentListRef.current.findIndex((content) => content.contentId === contentId);
+            if (removingTabIndex === -1) return [undefined, -1];
+            const removingContent = contentListRef.current[removingTabIndex];
+            const newContentList = contentListRef.current.filter((content) => content.contentId !== contentId);
+            if (newContentList.length === 0) {
               onCloseModeless(modelessId);
             } else {
-              setSelectedTabId((selectedTabId) => {
-                if (selectedTabId === tabId) {
-                  return newTabList.at(removeTabIndex)?.tabId || newTabList[removeTabIndex - 1].tabId;
+              setSelectedContentId((selectedContentId) => {
+                if (selectedContentId === contentId) {
+                  return (
+                    newContentList.at(removingTabIndex)?.contentId || newContentList[removingTabIndex - 1].contentId
+                  );
                 } else {
-                  return selectedTabId;
+                  return selectedContentId;
                 }
               });
             }
-            setTabList(newTabList);
-            return [removedTab, removeTabIndex];
+            setContentList(newContentList);
+            return [removingContent, removingTabIndex];
           },
-          insertTab: (tab: ModelessTab, index?: number) => {
-            setTabList((tabList) => {
-              const newTabList = [...tabList];
-              index = index === undefined ? newTabList.length : index;
-              newTabList.splice(index, 0, tab);
-              if (newTabList.length === 1) {
-                setSelectedTabId(tab.tabId);
+          insertTab: (content: ModelessContent, index?: number) => {
+            setContentList((contentList) => {
+              const newContentList = [...contentList];
+              index = index === undefined ? newContentList.length : index;
+              newContentList.splice(index, 0, content);
+              if (newContentList.length === 1) {
+                setSelectedContentId(content.contentId);
               }
-              return newTabList;
+              return newContentList;
             });
           },
-          moveTab: (srcTabId: string, dstTabIndex: number) => {
-            setTabList((tabList) => {
-              const srcTabIndex = tabList.findIndex((tab) => tab.tabId === srcTabId);
-              if (srcTabIndex === -1) return tabList;
+          moveTab: (srcContentId: string, dstTabIndex: number) => {
+            setContentList((contentList) => {
+              const srcTabIndex = contentList.findIndex((content) => content.contentId === srcContentId);
+              if (srcTabIndex === -1) return contentList;
 
-              const srcTab = tabList[srcTabIndex];
-              const newTabList = tabList.filter((tab) => tab.tabId !== srcTabId);
+              const srcContent = contentList[srcTabIndex];
+              const newContentList = contentList.filter((content) => content.contentId !== srcContentId);
               if (dstTabIndex === srcTabIndex) {
-                newTabList.splice(dstTabIndex - 1, 0, srcTab);
+                newContentList.splice(dstTabIndex - 1, 0, srcContent);
               } else {
-                newTabList.splice(dstTabIndex, 0, srcTab);
+                newContentList.splice(dstTabIndex, 0, srcContent);
               }
-              return newTabList;
+              return newContentList;
             });
           },
-          pushTabList: (pushTabList: ModelessTab[]) => {
-            if (pushTabList.length === 0) return;
-            if (tabListRef.current.length === 0) {
-              setSelectedTabId(pushTabList[0].tabId);
-            }
-            setTabList((prevTabList) => {
-              const newTabList = [...prevTabList, ...pushTabList];
-              return newTabList;
+          pushTabList: (pushingContentList: ModelessContent[]) => {
+            setContentList((prevContentList) => {
+              if (pushingContentList.length === 0) {
+                return prevContentList;
+              } else if (prevContentList.length === 0) {
+                setSelectedContentId(pushingContentList[0].contentId);
+                return [...pushingContentList];
+              } else {
+                const newTabList = [...prevContentList, ...pushingContentList];
+                return newTabList;
+              }
             });
           },
           getZIndex: () => {
@@ -222,7 +227,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
           },
         },
       }),
-      [modelessId, onCloseModeless, setTabList, tabListRef],
+      [onCloseModeless, modelessId, setContentList, setSelectedContentId, contentListRef, modelessRndControllerRef],
     );
 
     return (
@@ -257,13 +262,13 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
               gridAutoFlow={'row'}
               alignItems={'end'}
             >
-              {tabList.map((tab, tabIndex) =>
-                tab.renderTab({
+              {contentList.map((content, tabIndex) =>
+                content.renderTab({
                   modelessId,
-                  tabId: tab.tabId,
+                  contentId: content.contentId,
                   tabIndex,
-                  selectedTabId,
-                  setSelectedTabId,
+                  isSelected: content.contentId === selectedContentId,
+                  onSelectTab: setSelectedContentId,
                   onMoveTab,
                 }),
               )}
@@ -289,9 +294,9 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
                         marginTop={'0.5em'}
                         marginBottom={'0'}
                       />
-                      {selectedTab?.renderMenu({
+                      {selectedContent?.renderMenu({
                         modelessId,
-                        tabId: selectedTabId,
+                        contentId: selectedContentId,
                       })}
                     </MenuList>
                   </>
@@ -300,7 +305,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
             </Menu>
           </Flex>
           <Box flexGrow={1} overflow={'hidden'} backgroundColor={bgColor.gray[0].hex()}>
-            {selectedTab?.renderContent({ modelessId, tabId: selectedTabId })}
+            {selectedContent?.renderPanel({ modelessId, contentId: selectedContentId })}
           </Box>
         </Flex>
       </ModelessRnd>

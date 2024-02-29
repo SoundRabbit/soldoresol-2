@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { TableRendererChannel } from '@/lib/tableRenderer';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 export type RoomContextData = {
   roomId: string;

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DataBlock, DataBlockId } from '@/lib/dataBlock';
 import { TableDataBlock } from '@/lib/dataBlock/gameObject/tableDataBlock';
 import { DataBlockTableChannel } from '@/lib/dataBlockTable';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 import { Camera } from '../camera';
 

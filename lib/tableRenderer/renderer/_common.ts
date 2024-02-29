@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 
 import { DataBlock, DataBlockId } from '@/lib/dataBlock';
-
-import { Maybe } from '../../util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 export type GetDataBlock = <T extends DataBlock>(
   dataBlockId: DataBlockId,

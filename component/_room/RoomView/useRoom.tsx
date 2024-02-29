@@ -1,7 +1,11 @@
 import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ModelessContentProps, ModelessMenuProps, ModelessTabProps } from '@/component/modeless/Modeless';
+import {
+  ModelessContentMenuProps,
+  ModelessContentPanelProps,
+  ModelessContentTabProps,
+} from '@/component/modeless/Modeless';
 import { ModelessContainerController } from '@/component/modeless/ModelessContainer';
 
 import { DataBlock, DataBlockId } from '@/lib/dataBlock';
@@ -10,7 +14,7 @@ import { ChatDataBlock } from '@/lib/dataBlock/chatObject/chatDataBlock';
 import { ChatMessageListDataBlock } from '@/lib/dataBlock/chatObject/chatMessageListDataBlock';
 import { GameDataBlock } from '@/lib/dataBlock/gameObject/gameDataBlock';
 import { useDataBlockTable } from '@/lib/hook/useDataBlock';
-import { Maybe } from '@/lib/util/utilityTypes';
+import { Maybe } from '@/lib/type/utilityTypes';
 
 import { ChatModelessContent, ChatModelessMenu, ChatModelessTab } from './modelessContent/chat';
 
@@ -61,35 +65,35 @@ const useOpenChatModeless = (
   const openChatModeless = useCallback(() => {
     if (modelessContainerControllerRef.current) {
       const chatModelessTab = {
-        tabId: uuidv4(),
-        renderTab: ({ modelessId, tabId, ...props }: ModelessTabProps) => {
+        contentId: uuidv4(),
+        renderTab: ({ modelessId, contentId, ...props }: ModelessContentTabProps) => {
           return (
             <ChatModelessTab
-              key={`${modelessId}/${tabId}`}
+              key={`${modelessId}/${contentId}`}
               modelessId={modelessId}
-              tabId={tabId}
+              contentId={contentId}
               chatDataBlockId={chatDataBlockId}
               {...props}
             />
           );
         },
-        renderMenu: ({ modelessId, tabId, ...props }: ModelessMenuProps) => {
+        renderMenu: ({ modelessId, contentId, ...props }: ModelessContentMenuProps) => {
           return (
             <ChatModelessMenu
-              key={`${modelessId}/${tabId}`}
+              key={`${modelessId}/${contentId}`}
               modelessId={modelessId}
-              tabId={tabId}
+              contentId={contentId}
               chatDataBlockId={chatDataBlockId}
               {...props}
             />
           );
         },
-        renderContent: ({ modelessId, tabId, ...props }: ModelessContentProps) => {
+        renderPanel: ({ modelessId, contentId, ...props }: ModelessContentPanelProps) => {
           return (
             <ChatModelessContent
-              key={`${modelessId}/${tabId}`}
+              key={`${modelessId}/${contentId}`}
               modelessId={modelessId}
-              tabId={tabId}
+              contentId={contentId}
               chatDataBlockId={chatDataBlockId}
               {...props}
             />

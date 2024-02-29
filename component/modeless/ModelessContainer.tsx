@@ -5,13 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Box, BoxProps } from '@chakra-ui/react';
 
-import { NonChildren } from '@/lib/util/utilityTypes';
+import { NonChildren } from '@/lib/type/utilityTypes';
 
-import { Modeless, ModelessController, ModelessTab } from './Modeless';
+import { Modeless, ModelessContent, ModelessController } from './Modeless';
 import { parseDataTransfer } from './ModelessTab';
 
 export type ModelessContainerController = {
-  openModeless: (tabList: ModelessTab[], option?: { defaultPosition?: { x: number; y: number } }) => void;
+  openModeless: (contentList: ModelessContent[], option?: { defaultPosition?: { x: number; y: number } }) => void;
 };
 
 export type ModelessContainerProps = NonChildren<BoxProps> & {};
@@ -58,7 +58,7 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
     }, []);
 
     const [modelessList, setModelessList] = useState<ModelessList>([]);
-    const [reservedTabList, setReservedTabList] = useState<[string, ModelessTab[]][]>([]);
+    const [reservedContentList, setReservedContentList] = useState<[string, ModelessContent[]][]>([]);
 
     const modelessControllerRef = useRef<ModelessController>({});
 
@@ -78,8 +78,8 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
     );
 
     const handleOpenMoodeless = useCallback(
-      (tabList: ModelessTab[], option?: { defaultPosition?: { x: number; y: number } }) => {
-        if (tabList.length === 0) return;
+      (contentList: ModelessContent[], option?: { defaultPosition?: { x: number; y: number } }) => {
+        if (contentList.length === 0) return;
 
         const newModelessId = uuidv4();
         setModelessList((modelessList) => {
@@ -91,7 +91,7 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
           newModelessList.push({ modelessId: newModelessId, defaultZIndex: newZIndex, defaultPosition: position });
           return newModelessList;
         });
-        setReservedTabList((reservedTabList) => [...reservedTabList, [newModelessId, tabList]]);
+        setReservedContentList((reservedContentList) => [...reservedContentList, [newModelessId, contentList]]);
       },
       [],
     );
@@ -130,10 +130,10 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
         if (srcDataTransfer) {
           e.preventDefault();
           e.stopPropagation();
-          let srcTab: ModelessTab | undefined = undefined;
+          let srcTab: ModelessContent | undefined = undefined;
           const srcModelessController = modelessControllerRef.current[srcDataTransfer.modelessId];
           if (srcModelessController) {
-            srcTab = srcModelessController.removeTab(srcDataTransfer.tabId, true)[0];
+            srcTab = srcModelessController.removeTab(srcDataTransfer.contentId, true)[0];
           }
           if (srcTab) {
             const defaultPosition = {
@@ -178,20 +178,20 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
     }, [setContainerRect]);
 
     useEffect(() => {
-      if (reservedTabList.length === 0) return;
-      const newResevredTabList: [string, ModelessTab[]][] = [];
-      const len = reservedTabList.length;
+      if (reservedContentList.length === 0) return;
+      const newResevredContentList: [string, ModelessContent[]][] = [];
+      const len = reservedContentList.length;
       for (let i = 0; i < len; i++) {
-        const [modelessId, tabList] = reservedTabList[i];
+        const [modelessId, tabList] = reservedContentList[i];
         const modelessController = modelessControllerRef.current[modelessId];
         if (modelessController) {
           modelessController.pushTabList(tabList);
         } else {
-          newResevredTabList.push([modelessId, tabList]);
+          newResevredContentList.push([modelessId, tabList]);
         }
       }
-      setReservedTabList(newResevredTabList);
-    }, [reservedTabList]);
+      setReservedContentList(newResevredContentList);
+    }, [reservedContentList]);
 
     useImperativeHandle(ref, () => ({
       openModeless: (tabList, option) => {

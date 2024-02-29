@@ -2,8 +2,8 @@ import * as THREE from 'three';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { WorkboardDataBlock } from '@/lib/dataBlock/tableObject/workboardDataBlock';
+import { Maybe } from '@/lib/type/utilityTypes';
 import { bgColor, txColor } from '@/lib/util/openColor';
-import { Maybe } from '@/lib/util/utilityTypes';
 
 import { GetDataBlock, Rendered } from './_common';
 

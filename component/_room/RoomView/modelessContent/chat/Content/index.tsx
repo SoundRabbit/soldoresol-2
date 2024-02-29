@@ -6,7 +6,7 @@ import { Box, FlexProps, Grid, IconButton, Stack, TabList, TabPanels, Tabs, Text
 
 import { Textarea } from '@/component/Textarea';
 import { PaperAirPlaneIcon } from '@/component/icon/PaperAirPlaneIcon';
-import { ModelessContentProps } from '@/component/modeless/Modeless';
+import { ModelessContentPanelProps } from '@/component/modeless/Modeless';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
@@ -16,18 +16,18 @@ import { ChatMessageListDataBlock } from '@/lib/dataBlock/chatObject/chatMessage
 import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/lib/hook/useDataBlock';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
-import { useSelectedChannelIdWithTabIndex, useSelectedTargetChannelIdList } from '../useChatModelessTab';
+import { useSelectedChannelIdValueWithTabIndex, useSetSelectedChannelId } from '../useChatModelessTab';
 
 import { ChatChannelTabButton } from './ChatChannelTabButton';
 import { ChatChannelTabPanel } from './ChatChannelTabPanel';
 import { MessageTargetToggleButton } from './MessageTargetToggleButton';
 
 export type ContentProps = FlexProps &
-  ModelessContentProps & {
+  ModelessContentPanelProps & {
     chatDataBlockId: DataBlockId;
   };
 
-export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
+export const Content: React.FC<ContentProps> = ({ contentId, chatDataBlockId }) => {
   const { set: setDataBlock } = useDataBlockTable();
   const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
   const { set: setMessageList } = useDataBlock(
@@ -41,21 +41,19 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
 
   const { dataBlockList: chatChannelList } = useDataBlockList(chatChannelIdList, ChatChannelDataBlock.partialIs);
 
-  const { selectedChannelId, setSelectedChannelId, tabIndex } = useSelectedChannelIdWithTabIndex(
-    tabId,
-    chatChannelIdList,
-  );
+  const { selectedChannelId, tabIndex } = useSelectedChannelIdValueWithTabIndex(contentId, chatChannelIdList);
+  const { setSelectedChannelId } = useSetSelectedChannelId(contentId);
 
   const { dataBlock: selectedChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.partialIs);
 
-  const { selectedTargetChannelIdList, setSelectedTargetChannelIdList } = useSelectedTargetChannelIdList(tabId);
+  const [selectedTargetChannelIdSet, setSelectedTargetChannelIdSet] = useState(new Set<DataBlockId>());
 
   const selectedTargetChannelList = useMemo(
     () =>
       chatChannelList.filter(
-        (channel) => channel.id !== selectedChannelId && selectedTargetChannelIdList.includes(channel.id),
+        (channel) => channel.id !== selectedChannelId && selectedTargetChannelIdSet.has(channel.id),
       ),
-    [chatChannelList, selectedTargetChannelIdList, selectedChannelId],
+    [chatChannelList, selectedTargetChannelIdSet, selectedChannelId],
   );
 
   const [chatMessage, setChatMessage] = useState('');
@@ -66,24 +64,25 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
       setSelectedChannelId((prevId) => {
         const nextId = chatChannelIdListRef.current.at(index) ?? DataBlockId.none;
         if (prevId !== nextId) {
-          setSelectedTargetChannelIdList([]);
+          setSelectedTargetChannelIdSet(new Set());
         }
         return nextId;
       });
     },
-    [setSelectedChannelId, setSelectedTargetChannelIdList],
+    [setSelectedChannelId],
   );
 
-  const handleToggleTargetChannel = useCallback(
-    (isToggled: boolean, chatChannelDataBlockId: DataBlockId) => {
-      setSelectedTargetChannelIdList((selectedTargetChannelIdList) =>
-        isToggled ?
-          [...selectedTargetChannelIdList, chatChannelDataBlockId]
-        : selectedTargetChannelIdList.filter((id) => id !== chatChannelDataBlockId),
-      );
-    },
-    [setSelectedTargetChannelIdList],
-  );
+  const handleToggleTargetChannel = useCallback((isToggled: boolean, chatChannelDataBlockId: DataBlockId) => {
+    setSelectedTargetChannelIdSet((selectedTargetChannelIdSet) => {
+      const newSet = new Set(selectedTargetChannelIdSet);
+      if (isToggled) {
+        newSet.add(chatChannelDataBlockId);
+      } else {
+        newSet.delete(chatChannelDataBlockId);
+      }
+      return newSet;
+    });
+  }, []);
 
   const handleInputChatMessage = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setChatMessage(e.currentTarget.value);
@@ -91,9 +90,11 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
 
   const handleSendChatMessage = useCallback(async () => {
     if (selectedChannel) {
+      const filterChannelList = Array.from(selectedTargetChannelIdSet);
+
       const newMessage = ChatMessageDataBlock.create({
         originalMessage: chatMessage,
-        filterChannelList: [selectedChannel.id, ...selectedTargetChannelIdList],
+        filterChannelList: [selectedChannel.id, ...filterChannelList],
       });
 
       const messageId = await setDataBlock(newMessage);
@@ -109,7 +110,7 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
       setChatMessage('');
       setChatMessageKey((prevKey) => prevKey + 1);
     }
-  }, [setDataBlock, setMessageList, chatMessage, selectedTargetChannelIdList, selectedChannel]);
+  }, [setDataBlock, setMessageList, chatMessage, selectedTargetChannelIdSet, selectedChannel]);
 
   const handleKeyDownInTextarea = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -171,7 +172,7 @@ export const Content: React.FC<ContentProps> = ({ tabId, chatDataBlockId }) => {
             {chat?.channelList.map((channelId) => (
               <MessageTargetToggleButton
                 key={channelId}
-                isActive={channelId === selectedChannelId || selectedTargetChannelIdList.includes(channelId)}
+                isActive={channelId === selectedChannelId || selectedTargetChannelIdSet.has(channelId)}
                 chatChannelDataBlockId={channelId}
                 onToggle={handleToggleTargetChannel}
                 fontSize={'0.7rem'}

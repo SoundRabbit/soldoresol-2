@@ -13,7 +13,7 @@ export type OnMoveTab = (srcModelessId: string, dstModelessId: string, srcTabId:
 export const modelessTabDataTransfer = t.type({
   isModelessTab: t.literal(true),
   modelessId: t.string,
-  tabId: t.string,
+  contentId: t.string,
   tabIndex: t.number,
 });
 
@@ -32,33 +32,31 @@ export const parseDataTransfer = (e: React.DragEvent<HTMLDivElement>): ModelessT
 
 export type ModelessTabProps = BoxProps & {
   modelessId: string;
-  tabId: string;
+  contentId: string;
   tabIndex: number;
-  selectedTabId: string;
-  setSelectedTabId: (tabId: string) => void;
+  isSelected: boolean;
+  onSelectTab: (tabId: string) => void;
   onMoveTab: OnMoveTab;
 };
 
 export const ModelessTab: React.FC<ModelessTabProps> = ({
   modelessId,
-  tabId,
+  contentId,
   tabIndex,
-  selectedTabId,
-  setSelectedTabId,
+  isSelected,
+  onSelectTab,
   onMoveTab,
   children,
   ...props
 }) => {
-  const isSelected = selectedTabId === tabId;
-
   const dataTransfer = useMemo<ModelessTabDataTransfer>(
     () => ({
       isModelessTab: true,
       modelessId,
-      tabId,
+      contentId,
       tabIndex,
     }),
-    [modelessId, tabId, tabIndex],
+    [modelessId, contentId, tabIndex],
   );
 
   const handleDragsStart = useCallback(
@@ -78,7 +76,7 @@ export const ModelessTab: React.FC<ModelessTabProps> = ({
       if (srcDataTransfer) {
         e.preventDefault();
         e.stopPropagation();
-        onMoveTab(srcDataTransfer.modelessId, modelessId, srcDataTransfer.tabId, tabIndex);
+        onMoveTab(srcDataTransfer.modelessId, modelessId, srcDataTransfer.contentId, tabIndex);
       }
     },
     [modelessId, onMoveTab, tabIndex],
@@ -89,8 +87,8 @@ export const ModelessTab: React.FC<ModelessTabProps> = ({
   }, []);
 
   const handleClick = useCallback(() => {
-    setSelectedTabId(tabId);
-  }, [setSelectedTabId, tabId]);
+    onSelectTab(contentId);
+  }, [onSelectTab, contentId]);
 
   return (
     <Flex

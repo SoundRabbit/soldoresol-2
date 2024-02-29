@@ -4,17 +4,17 @@ import React from 'react';
 
 import { MenuDivider, MenuGroup, MenuItem, useDisclosure } from '@chakra-ui/react';
 
-import { ModelessMenuProps } from '@/component/modeless/Modeless';
+import { ModelessContentMenuProps } from '@/component/modeless/Modeless';
 
 import { DataBlockId } from '@/lib/dataBlock';
 
 import { ChannelEditorModal } from './ChannelEditorModal';
 
-export type MenuProps = ModelessMenuProps & {
+export type MenuProps = ModelessContentMenuProps & {
   chatDataBlockId: DataBlockId;
 };
 
-export const Menu: React.FC<MenuProps> = ({ chatDataBlockId, tabId }) => {
+export const Menu: React.FC<MenuProps> = ({ chatDataBlockId, contentId }) => {
   const {
     isOpen: isChannelEditorModalOpened,
     onOpen: onOpenChannelEditorModal,
@@ -34,7 +34,7 @@ export const Menu: React.FC<MenuProps> = ({ chatDataBlockId, tabId }) => {
         isOpen={isChannelEditorModalOpened}
         onClose={onCloseChannelEditorModal}
         chatDataBlockId={chatDataBlockId}
-        tabId={tabId}
+        tabId={contentId}
       />
     </>
   );

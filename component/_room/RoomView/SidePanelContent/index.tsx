@@ -3,7 +3,7 @@ import React from 'react';
 import { Tab, TabList, TabPanels, Tabs, TabsProps } from '@chakra-ui/react';
 
 import { DataBlockId } from '@/lib/dataBlock';
-import { NonChildren } from '@/lib/util/utilityTypes';
+import { NonChildren } from '@/lib/type/utilityTypes';
 
 import { SceneTabPanel } from './SceneTabPanel';
 

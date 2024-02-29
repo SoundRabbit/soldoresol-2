@@ -12,19 +12,19 @@ import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelData
 import { ChatDataBlock } from '@/lib/dataBlock/chatObject/chatDataBlock';
 import { useDataBlock } from '@/lib/hook/useDataBlock';
 
-import { useSelectedChannelId } from './useChatModelessTab';
+import { useSelectedChannelIdValue } from './useChatModelessTab';
 
 export type TabProps = ModelessTabProps & {
   chatDataBlockId: DataBlockId;
 };
 
-export const Tab: React.FC<TabProps> = ({ tabId, chatDataBlockId, ...modelessTabProps }) => {
+export const Tab: React.FC<TabProps> = ({ contentId, chatDataBlockId, ...modelessTabProps }) => {
   const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
-  const { selectedChannelId } = useSelectedChannelId(tabId, chat?.channelList ?? []);
+  const { selectedChannelId } = useSelectedChannelIdValue(contentId, chat?.channelList ?? []);
   const { dataBlock: selectedChatChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.partialIs);
 
   return (
-    <ModelessTab tabId={tabId} {...modelessTabProps}>
+    <ModelessTab contentId={contentId} {...modelessTabProps}>
       <Grid gridTemplateColumns={'max-content 1fr'} alignItems={'center'} columnGap={'1ch'}>
         <ChatIcon />
         <Grid
