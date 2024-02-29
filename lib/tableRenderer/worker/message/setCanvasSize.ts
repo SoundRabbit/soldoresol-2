@@ -4,6 +4,7 @@ export type SetCanvasSize = {
   tag: typeof tagName;
   width: number;
   height: number;
+  devicePixelRatio: number;
 };
 
 export const SetCanvasSize = {

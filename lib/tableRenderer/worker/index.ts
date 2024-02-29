@@ -61,11 +61,12 @@ if (typeof DedicatedWorkerGlobalScope !== 'undefined' && (self as any) instanceo
       }
     }
     if (SetCanvasSize.is(data)) {
+      context.renderer?.three.setPixelRatio(data.devicePixelRatio);
+      context.renderer?.three.setSize(data.width, data.height, false);
       if (context.renderer?.camera) {
         context.renderer.camera.aspect = data.width / data.height;
         context.renderer.camera.updateProjectionMatrix();
       }
-      context.renderer?.three.setSize(data.width, data.height);
     }
     if (SetTableDataBlockId.is(data)) {
       if (context.renderer) {

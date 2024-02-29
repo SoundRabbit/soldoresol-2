@@ -78,10 +78,9 @@ export const useCanvas = () => {
 
   const handleChangeCanvasSize = useCallback(() => {
     if (canvasRef.current && roomContext) {
-      const devicePixelRatio = window.devicePixelRatio || 1;
       TableRendererChannel.setCanvasSize(roomContext.renderer, [
-        canvasRef.current.clientWidth * devicePixelRatio,
-        canvasRef.current.clientHeight * devicePixelRatio,
+        canvasRef.current.clientWidth,
+        canvasRef.current.clientHeight,
       ]);
     }
   }, [roomContext]);

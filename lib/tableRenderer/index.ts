@@ -77,8 +77,9 @@ export const TableRendererChannel = {
     context.worker?.postMessage(SetCameraPosition.create({ ...props }));
   },
 
-  setCanvasSize(context: TableRendererChannel, [width, height]: [number, number]) {
-    context.worker?.postMessage(SetCanvasSize.create({ width, height }));
+  setCanvasSize(context: TableRendererChannel, [width, height]: [number, number], devicePixelRatio?: number) {
+    devicePixelRatio = devicePixelRatio ?? typeof Window !== 'undefined' ? window.devicePixelRatio : 1;
+    context.worker?.postMessage(SetCanvasSize.create({ width, height, devicePixelRatio }));
   },
 
   setDataBlockTablePort(context: TableRendererChannel, port: MessagePort) {
