@@ -9,7 +9,7 @@ import { ChevronUpIcon } from '@/component/icon/ChevronUpIcon';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
-import { useDataBlock } from '@/lib/hook/useDataBlock';
+import { useDataBlockValue } from '@/lib/hook/useDataBlock';
 import { useRefState } from '@/lib/hook/useRefState';
 
 export type ChatChannelTabPanelDescriptionProps = Omit<FlexProps, 'children'> & {
@@ -26,7 +26,7 @@ export const ChatChannelTabPanelDescription: React.FC<ChatChannelTabPanelDescrip
   parentElement,
   ...props
 }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
+  const chatChannel = useDataBlockValue(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
   const description = useMemo(() => chatChannel?.description ?? '', [chatChannel]);
 
   const [title, text] = useMemo(() => {

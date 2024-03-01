@@ -1,188 +1,186 @@
-import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
-import useSWRInfinite, { unstable_serialize } from 'swr/infinite';
-
-import { DataBlockTableContext } from '@/component/context/DataBlockTableContext';
-import { RoomContext } from '@/component/context/RoomContext';
+import { produce } from 'immer';
+import { useMemo } from 'react';
+import { atomFamily, selectorFamily, useRecoilCallback, useRecoilValue } from 'recoil';
 
 import { DataBlock, DataBlockId } from '@/lib/dataBlock';
 import { DataBlockTableChannel } from '@/lib/dataBlockTable';
+import { useDataBlockTableChannelValue } from '@/lib/hook/useDataBlockTableChannelState';
+import { useRefWrap } from '@/lib/hook/useRefWrap';
+import { RoomId, useRoomIdValue } from '@/lib/hook/useRoomState';
 
-const dataBlockSwrKey = (roomId: string, dataBlockId: DataBlockId) => [roomId, dataBlockId];
+import { Maybe } from '../type/utilityTypes';
+
+const RECOIL_KEY = 'lib/hook/useDataBlock:';
+const DATA_BLOCK_TABLE_STATE_KEY = RECOIL_KEY + 'dataBlockTable';
+const DATA_BLOCK_LIST_STATE_KEY = RECOIL_KEY + 'dataBlockList';
+const DATA_BLOCK_STATE_KEY = RECOIL_KEY + 'dataBlock';
+
+type DataBlockTable = Record<DataBlockId, Maybe<DataBlock>>;
+
+const dataBlockTableState = atomFamily<DataBlockTable, DataBlockId>({
+  key: DATA_BLOCK_TABLE_STATE_KEY,
+  default: {},
+});
+
+const dataBlockSelector = selectorFamily<Maybe<DataBlock>, [RoomId, DataBlockId]>({
+  key: DATA_BLOCK_STATE_KEY,
+  get:
+    ([roomId, dataBlockId]) =>
+    ({ get }) => {
+      if (roomId === '') return undefined;
+
+      const dataBlockTable = get(dataBlockTableState(roomId));
+
+      return dataBlockTable[dataBlockId];
+    },
+  set:
+    ([roomId, dataBlockId]) =>
+    ({ set }, newDataBlock) => {
+      set(
+        dataBlockTableState(roomId),
+        produce((draft) => {
+          if (roomId === '') return;
+          if (DataBlock.is(newDataBlock) && newDataBlock.id === dataBlockId) {
+            draft[dataBlockId] = newDataBlock;
+          } else if (typeof newDataBlock === 'undefined') {
+            delete draft[dataBlockId];
+          }
+        }),
+      );
+    },
+});
+
+const dataBlockListSelector = selectorFamily<DataBlock[], [RoomId, DataBlockId[]]>({
+  key: DATA_BLOCK_LIST_STATE_KEY,
+  get:
+    ([roomId, dataBlockIdList]) =>
+    ({ get }) => {
+      if (roomId === '') return [];
+      const dataBlockList = dataBlockIdList
+        .map((dataBlockId) => get(dataBlockSelector([roomId, dataBlockId])))
+        .filter(DataBlock.is);
+      return dataBlockList;
+    },
+});
 
 export const useDataBlockTable = () => {
-  const tableContext = useContext(DataBlockTableContext);
-  const roomContext = useContext(RoomContext);
+  const tableChannel = useDataBlockTableChannelValue();
+  const roomId = useRoomIdValue();
 
-  const { mutate } = useSWRConfig();
+  const set = useRecoilCallback(
+    ({ set, snapshot }) =>
+      async (dataBlock: DataBlock) => {
+        if (roomId === '') return;
 
-  const mutateKey = useCallback(
-    (dataBlockId: DataBlockId) => {
-      if (!tableContext || !roomContext) return;
-      const roomId = roomContext.roomId;
+        const prevDataBlock = await snapshot.getPromise(dataBlockSelector([roomId, dataBlock.id]));
+        set(dataBlockSelector([roomId, dataBlock.id]), dataBlock);
 
-      mutate(dataBlockSwrKey(roomId, dataBlockId));
+        const dataBlockId = await DataBlockTableChannel.set(tableChannel, roomId, dataBlock.id, dataBlock);
+        if (!dataBlockId) {
+          set(dataBlockSelector([roomId, dataBlock.id]), prevDataBlock);
+        }
 
-      for (const getKey of tableContext.mutData.current.getKeyList) {
-        mutate(unstable_serialize(getKey));
-      }
-    },
-    [tableContext, roomContext, mutate],
+        return dataBlockId;
+      },
+    [tableChannel, roomId],
   );
 
-  const get = useCallback(
-    async <T extends DataBlock>(dataBlockId: DataBlockId, typeChecker: (data: DataBlock) => data is T) => {
-      if (!tableContext || !roomContext) return;
-      const context = tableContext.channel;
-      const roomId = roomContext.roomId;
+  const remove = useRecoilCallback(
+    ({ set, snapshot }) =>
+      async (dataBlockId: DataBlockId) => {
+        if (roomId === '') return;
 
-      return await DataBlockTableChannel.get(context, roomId, dataBlockId, typeChecker);
-    },
-    [tableContext, roomContext],
-  );
+        const prevDataBlock = await snapshot.getPromise(dataBlockSelector([roomId, dataBlockId]));
+        set(dataBlockSelector([roomId, dataBlockId]), undefined);
 
-  const set = useCallback(
-    async (dataBlock: DataBlock) => {
-      if (!tableContext || !roomContext) return;
-      const context = tableContext.channel;
-      const roomId = roomContext.roomId;
+        const removedDataBlockId = await DataBlockTableChannel.remove(tableChannel, roomId, dataBlockId);
+        if (!removedDataBlockId) {
+          set(dataBlockSelector([roomId, dataBlockId]), prevDataBlock);
+        }
 
-      await DataBlockTableChannel.set(context, roomId, dataBlock.id, dataBlock);
-      mutateKey(dataBlock.id);
-
-      return dataBlock.id;
-    },
-    [tableContext, roomContext, mutateKey],
-  );
-
-  const remove = useCallback(
-    async (dataBlockId: DataBlockId) => {
-      if (!tableContext || !roomContext) return;
-      const context = tableContext.channel;
-      const roomId = roomContext.roomId;
-
-      await DataBlockTableChannel.remove(context, roomId, dataBlockId);
-
-      mutateKey(dataBlockId);
-
-      return dataBlockId;
-    },
-    [tableContext, roomContext, mutateKey],
+        return dataBlockId;
+      },
+    [tableChannel, roomId],
   );
 
   return useMemo(
     () => ({
-      get,
       set,
       remove,
     }),
-    [get, set, remove],
+    [set, remove],
   );
 };
 
-export const useDataBlock = <T extends DataBlock>(
+export const useDataBlockValue = <T extends DataBlock>(
   dataBlockId: DataBlockId,
   typeChecker: (data: DataBlock) => data is T,
 ) => {
-  const tableContext = useContext(DataBlockTableContext);
-  const roomContext = useContext(RoomContext);
+  const roomId = useRoomIdValue();
 
-  const dataBlockFetcher = useCallback(async () => {
-    if (!tableContext || !roomContext) return;
-    const context = tableContext.channel;
-    const roomId = roomContext.roomId;
-
-    return await DataBlockTableChannel.get(context, roomId, dataBlockId, typeChecker);
-  }, [tableContext, roomContext, dataBlockId, typeChecker]);
-
-  const { set } = useDataBlockTable();
-  const { data } = useSWR(dataBlockSwrKey(roomContext?.roomId ?? '', dataBlockId), dataBlockFetcher);
-  const dataRef = useRef(data);
-  dataRef.current = data;
-
-  const bindedSet = useCallback(
-    async (updateCallback: (dataBlock: T) => Promise<T>) => {
-      const data = dataRef.current;
-      if (data && typeChecker(data)) {
-        const dataBlock = await updateCallback(dataRef.current as T);
-        await set(dataBlock);
-      }
-    },
-    [set, typeChecker],
+  const dataBlock = useRecoilValue(dataBlockSelector([roomId, dataBlockId]));
+  const typeCheckedDataBlock = useMemo(
+    () => (!!dataBlock && typeChecker(dataBlock) ? dataBlock : undefined),
+    [dataBlock, typeChecker],
   );
 
-  return useMemo(
-    () => ({
-      dataBlock: !!data && typeChecker(data) ? data : undefined,
-      set: bindedSet,
-    }),
-    [data, bindedSet, typeChecker],
+  return typeCheckedDataBlock;
+};
+
+export const useSetDataBlock = <T extends DataBlock>(
+  dataBlockId: DataBlockId,
+  typeChecker: (data: DataBlock) => data is T,
+) => {
+  const roomId = useRoomIdValue();
+
+  const { set: setDataBlock } = useDataBlockTable();
+  const dataBlockIdRef = useRefWrap(dataBlockId);
+  const typeCheckerRef = useRefWrap(typeChecker);
+
+  const set = useRecoilCallback(
+    ({ snapshot }) =>
+      async (updateCallback: (dataBlock: T) => Promise<T>) => {
+        const dataBlockId = dataBlockIdRef.current;
+        const typeChecker = typeCheckerRef.current;
+
+        const data = await snapshot.getPromise(dataBlockSelector([roomId, dataBlockId]));
+        if (!!data && typeChecker(data)) {
+          const dataBlock = await updateCallback(data);
+          await setDataBlock(dataBlock);
+        }
+      },
+    [roomId, setDataBlock, dataBlockIdRef, typeCheckerRef],
   );
+
+  return set;
+};
+
+export const useDataBlockState = <T extends DataBlock>(
+  dataBlockId: DataBlockId,
+  typeChecker: (data: DataBlock) => data is T,
+) => {
+  const dataBlock = useDataBlockValue(dataBlockId, typeChecker);
+  const set = useSetDataBlock(dataBlockId, typeChecker);
+
+  return { dataBlock, set };
 };
 
 export const useDataBlockList = <T extends DataBlock>(
   idList: DataBlockId[],
   typeChecker: (data: DataBlock) => data is T,
 ) => {
-  const tableContext = useContext(DataBlockTableContext);
-  const roomContext = useContext(RoomContext);
+  const roomId = useRoomIdValue();
 
-  const getKey = useCallback(
-    (index: number) => {
-      const dataBlockId = idList.at(index) ?? DataBlockId.none;
-      return dataBlockSwrKey(roomContext?.roomId ?? '', dataBlockId);
-    },
-    [idList, roomContext],
-  );
+  const dataBlockList = useRecoilValue(dataBlockListSelector([roomId, idList]));
 
-  if (tableContext && tableContext.mutData.current.getKeyList.findIndex((item) => item === getKey) === -1) {
-    tableContext.mutData.current.getKeyList.push(getKey);
-  }
-
-  const dataBlockFetcher = useCallback(
-    async ([_, dataBlockId]: [string, string]) => {
-      if (!tableContext || !roomContext) return;
-      const context = tableContext.channel;
-      const roomId = roomContext.roomId;
-
-      return await DataBlockTableChannel.get(context, roomId, dataBlockId, typeChecker);
-    },
-    [tableContext, roomContext, typeChecker],
-  );
-
-  const { data, setSize } = useSWRInfinite(getKey, dataBlockFetcher, {
-    initialSize: 0,
-    persistSize: true,
-    revalidateFirstPage: false,
-    revalidateAll: false,
-  });
-
-  const filteredData = useMemo(() => {
-    return (data?.filter((data) => !!data && typeChecker(data)) ?? []) as T[];
-  }, [data, typeChecker]);
-
-  const idListLength = useMemo(() => idList.length, [idList]);
-
-  const cleanupGetKeyList = useCallback(() => {
-    if (tableContext) {
-      tableContext.mutData.current.getKeyList = tableContext.mutData.current.getKeyList.filter(
-        (item) => item !== getKey,
-      );
-    }
-  }, [tableContext, getKey]);
-
-  useEffect(() => {
-    return cleanupGetKeyList;
-  }, [cleanupGetKeyList]);
-
-  useEffect(() => {
-    setSize(idListLength);
-  }, [idListLength, setSize]);
+  const typeCheckedDataBlockList = useMemo(() => {
+    return dataBlockList.filter((dataBlock) => typeChecker(dataBlock));
+  }, [dataBlockList, typeChecker]);
 
   return useMemo(
     () => ({
-      dataBlockList: filteredData,
+      dataBlockList: typeCheckedDataBlockList,
     }),
-    [filteredData],
+    [typeCheckedDataBlockList],
   );
 };

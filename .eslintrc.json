@@ -1,7 +1,14 @@
 {
   "extends": ["next", "next/core-web-vitals", "prettier"],
-  "plugins": ["unused-imports"],
+  "plugins": ["react-hooks", "unused-imports"],
   "rules": {
-    "unused-imports/no-unused-imports": "warn"
+    "unused-imports/no-unused-imports": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": [
+      "warn",
+      {
+        "additionalHooks": "(useRecoilCallback|useRecoilTransaction_UNSTABLE)"
+      }
+    ]
   }
 }

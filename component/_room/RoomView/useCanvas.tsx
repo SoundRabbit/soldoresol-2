@@ -1,12 +1,20 @@
 import * as THREE from 'three';
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { atom, useRecoilCallback } from 'recoil';
 
-import { DataBlockTableContext } from '@/component/context/DataBlockTableContext';
-import { RoomContext } from '@/component/context/RoomContext';
-
+import { useDataBlockTableChannelValue } from '@/lib/hook/useDataBlockTableChannelState';
 import { useMutex } from '@/lib/hook/useMutex';
+import { useRoomIdValue, useRoomRendererValue } from '@/lib/hook/useRoomState';
 import { TableRendererChannel } from '@/lib/tableRenderer';
 import { Camera } from '@/lib/tableRenderer/camera';
+
+const RECOIL_KEY = 'component/_room/RoomView/useCanvas:';
+const CANVAS_DRAGGING_STATE_KEY = RECOIL_KEY + 'canvasDraggingState';
+
+export const canvasDraggingState = atom({
+  key: CANVAS_DRAGGING_STATE_KEY,
+  default: false,
+});
 
 type MouseButtonEvent = {
   position: [number, number];
@@ -57,33 +65,31 @@ const intersectRayByZPlane = (
 };
 
 export const useCanvas = () => {
-  const roomContext = useContext(RoomContext);
-  const tableContext = useContext(DataBlockTableContext);
+  const roomRenderer = useRoomRendererValue();
+  const roomId = useRoomIdValue();
+  const dataBlockTableChannel = useDataBlockTableChannelValue();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleCanvasRef = useCallback(
     (canvas: HTMLCanvasElement | null) => {
-      if (!canvasRef.current && canvas && roomContext && tableContext) {
+      if (!canvasRef.current && canvas && roomId != '') {
         const devicePixelRatio = window.devicePixelRatio || 1;
         canvas.width = canvas.clientWidth * devicePixelRatio;
         canvas.height = canvas.clientHeight * devicePixelRatio;
         const offscreen = canvas.transferControlToOffscreen();
-        TableRendererChannel.run(roomContext.renderer, tableContext.channel, roomContext.roomId, offscreen);
+        TableRendererChannel.run(roomRenderer, dataBlockTableChannel, roomId, offscreen);
       }
       canvasRef.current = canvas;
     },
-    [roomContext, tableContext],
+    [roomRenderer, roomId, dataBlockTableChannel],
   );
 
   const handleChangeCanvasSize = useCallback(() => {
-    if (canvasRef.current && roomContext) {
-      TableRendererChannel.setCanvasSize(roomContext.renderer, [
-        canvasRef.current.clientWidth,
-        canvasRef.current.clientHeight,
-      ]);
+    if (canvasRef.current) {
+      TableRendererChannel.setCanvasSize(roomRenderer, [canvasRef.current.clientWidth, canvasRef.current.clientHeight]);
     }
-  }, [roomContext]);
+  }, [roomRenderer]);
 
   useEffect(() => {
     window.addEventListener('resize', handleChangeCanvasSize);
@@ -111,95 +117,101 @@ export const useCanvas = () => {
   const mouseRef = useRef(defaultMouse);
 
   const { runImmediately } = useMutex();
-  const handleMouseEvent = useCallback(
-    (e: React.MouseEvent) => {
-      runImmediately(async () => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const currentMouse = [e.clientX - rect.left, e.clientY - rect.top] as [number, number];
-        const prevMouse = [...mouseRef.current.position] as [number, number];
+  const handleMouseEvent = useRecoilCallback(
+    ({ snapshot, set }) =>
+      (e: React.MouseEvent) => {
+        const currentEventTarget = e.currentTarget;
+        const eventTarget = e.target;
+        runImmediately(async () => {
+          const rect = currentEventTarget.getBoundingClientRect();
+          const currentMouse = [e.clientX - rect.left, e.clientY - rect.top] as [number, number];
+          const prevMouse = [...mouseRef.current.position] as [number, number];
 
-        mouseRef.current.position = currentMouse;
+          mouseRef.current.position = currentMouse;
 
-        if (
-          e.currentTarget === null ||
-          e.target === null ||
-          e.currentTarget !== e.target ||
-          !roomContext ||
-          !roomContext.renderer ||
-          (e.buttons & 1) === 0
-        ) {
-          mouseRef.current.dragging = undefined;
-          return;
-        }
+          const isCanvasDragging = await snapshot.getPromise(canvasDraggingState);
+          if (
+            currentEventTarget === null ||
+            eventTarget === null ||
+            currentEventTarget !== eventTarget ||
+            (e.buttons & 1) === 0
+          ) {
+            if (isCanvasDragging) set(canvasDraggingState, false);
+            mouseRef.current.dragging = undefined;
+            return;
+          } else {
+            if (!isCanvasDragging) set(canvasDraggingState, true);
+            e.preventDefault();
+          }
 
-        const currentPosition = [2 * (currentMouse[0] / rect.width) - 1, 2 * (currentMouse[1] / rect.height) - 1] as [
-          number,
-          number,
-        ];
-        currentPosition[1] *= -1;
+          const currentPosition = [2 * (currentMouse[0] / rect.width) - 1, 2 * (currentMouse[1] / rect.height) - 1] as [
+            number,
+            number,
+          ];
+          currentPosition[1] *= -1;
 
-        const prevPosition = [2 * (prevMouse[0] / rect.width) - 1, 2 * (prevMouse[1] / rect.height) - 1] as [
-          number,
-          number,
-        ];
-        prevPosition[1] *= -1;
+          const prevPosition = [2 * (prevMouse[0] / rect.width) - 1, 2 * (prevMouse[1] / rect.height) - 1] as [
+            number,
+            number,
+          ];
+          prevPosition[1] *= -1;
 
-        if (!mouseRef.current.dragging) {
-          const { intersect, camera } = await TableRendererChannel.getIntersect(roomContext.renderer, prevPosition);
-          if (intersect.at(0) && camera) {
-            const vpMx = new THREE.Matrix4().fromArray(camera.colMajorVp);
-            const vpMxInv = new THREE.Matrix4().fromArray(camera.colMajorVpInv);
-            const intersectPosition = new THREE.Vector4(...intersect[0].position, 1);
-            const screenPosition = intersectPosition.clone().applyMatrix4(vpMx);
-            mouseRef.current.dragging = {
-              intersectPosition,
-              screenPosition,
-              vpMx,
-              vpMxInv,
-            };
-          } else if (camera) {
-            const vpMx = new THREE.Matrix4().fromArray(camera.colMajorVp);
-            const vpMxInv = new THREE.Matrix4().fromArray(camera.colMajorVpInv);
-            const planeIntersection = intersectRayByZPlane(vpMxInv, 0, prevPosition);
-            if (planeIntersection) {
-              const [intersectPosition, screenPosition] = planeIntersection;
+          if (!mouseRef.current.dragging) {
+            const { intersect, camera } = await TableRendererChannel.getIntersect(roomRenderer, prevPosition);
+            if (intersect.at(0) && camera) {
+              const vpMx = new THREE.Matrix4().fromArray(camera.colMajorVp);
+              const vpMxInv = new THREE.Matrix4().fromArray(camera.colMajorVpInv);
+              const intersectPosition = new THREE.Vector4(...intersect[0].position, 1);
+              const screenPosition = intersectPosition.clone().applyMatrix4(vpMx);
               mouseRef.current.dragging = {
                 intersectPosition,
                 screenPosition,
                 vpMx,
                 vpMxInv,
               };
+            } else if (camera) {
+              const vpMx = new THREE.Matrix4().fromArray(camera.colMajorVp);
+              const vpMxInv = new THREE.Matrix4().fromArray(camera.colMajorVpInv);
+              const planeIntersection = intersectRayByZPlane(vpMxInv, 0, prevPosition);
+              if (planeIntersection) {
+                const [intersectPosition, screenPosition] = planeIntersection;
+                mouseRef.current.dragging = {
+                  intersectPosition,
+                  screenPosition,
+                  vpMx,
+                  vpMxInv,
+                };
+              }
             }
+            return;
           }
-          return;
-        }
 
-        const { vpMxInv, intersectPosition } = mouseRef.current.dragging;
-        const currentScreenPosition = mouseRef.current.dragging.screenPosition.clone();
-        currentScreenPosition.setX(currentPosition[0] * currentScreenPosition.w);
-        currentScreenPosition.setY(currentPosition[1] * currentScreenPosition.w);
-        const currentWorldPosition = currentScreenPosition.clone().applyMatrix4(vpMxInv);
+          const { vpMxInv, intersectPosition } = mouseRef.current.dragging;
+          const currentScreenPosition = mouseRef.current.dragging.screenPosition.clone();
+          currentScreenPosition.setX(currentPosition[0] * currentScreenPosition.w);
+          currentScreenPosition.setY(currentPosition[1] * currentScreenPosition.w);
+          const currentWorldPosition = currentScreenPosition.clone().applyMatrix4(vpMxInv);
 
-        const deltaX = currentWorldPosition.x - intersectPosition.x;
-        const deltaY = currentWorldPosition.y - intersectPosition.y;
-        const deltaZ = currentWorldPosition.z - intersectPosition.z;
+          const deltaX = currentWorldPosition.x - intersectPosition.x;
+          const deltaY = currentWorldPosition.y - intersectPosition.y;
+          const deltaZ = currentWorldPosition.z - intersectPosition.z;
 
-        mouseRef.current.dragging.intersectPosition = currentWorldPosition;
-        mouseRef.current.dragging.screenPosition = currentScreenPosition;
+          mouseRef.current.dragging.intersectPosition = currentWorldPosition;
+          mouseRef.current.dragging.screenPosition = currentScreenPosition;
 
-        Camera.moveWorld(cameraRef.current, deltaX, deltaY, deltaZ);
-        const cameraPosition = Camera.getPosition(cameraRef.current);
-        const cameraRotation = Camera.getRotation(cameraRef.current, 'XYZ');
-        TableRendererChannel.setCameraPosition(roomContext.renderer, {
-          position: [cameraPosition.x, cameraPosition.y, cameraPosition.z],
-          rotation: {
-            euler: [cameraRotation.x, cameraRotation.y, cameraRotation.z],
-            order: 'XYZ',
-          },
+          Camera.moveWorld(cameraRef.current, deltaX, deltaY, deltaZ);
+          const cameraPosition = Camera.getPosition(cameraRef.current);
+          const cameraRotation = Camera.getRotation(cameraRef.current, 'XYZ');
+          TableRendererChannel.setCameraPosition(roomRenderer, {
+            position: [cameraPosition.x, cameraPosition.y, cameraPosition.z],
+            rotation: {
+              euler: [cameraRotation.x, cameraRotation.y, cameraRotation.z],
+              order: 'XYZ',
+            },
+          });
         });
-      });
-    },
-    [roomContext, runImmediately],
+      },
+    [roomRenderer, runImmediately],
   );
 
   return {

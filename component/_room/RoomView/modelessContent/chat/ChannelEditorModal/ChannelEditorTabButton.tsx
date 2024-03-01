@@ -9,7 +9,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
-import { useDataBlock } from '@/lib/hook/useDataBlock';
+import { useDataBlockValue } from '@/lib/hook/useDataBlock';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
 export type ChannelEditorTabButtonProps = Omit<TabProps, 'children'> & {
@@ -17,7 +17,7 @@ export type ChannelEditorTabButtonProps = Omit<TabProps, 'children'> & {
 };
 
 export const ChannelEditorTabButton: React.FC<ChannelEditorTabButtonProps> = ({ chatChannelDataBlockId, ...props }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
+  const chatChannel = useDataBlockValue(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: chatChannelDataBlockId });
 

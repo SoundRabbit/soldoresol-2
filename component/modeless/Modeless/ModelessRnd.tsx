@@ -1,8 +1,11 @@
 'use client';
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import type { RndDragCallback, RndResizeCallback } from 'react-rnd';
+import { createPortal } from 'react-dom';
+import type { RndDragCallback, RndResizeCallback, RndResizeStartCallback } from 'react-rnd';
 import { Rnd } from 'react-rnd';
+
+import { Box } from '@chakra-ui/react';
 
 import { useRefState } from '@/lib/hook/useRefState';
 
@@ -24,10 +27,11 @@ export type ModelessRndProps = React.ComponentProps<typeof Rnd> & {
   defaultZIndex: number;
   defaultPosition: { x: number; y: number };
   containerRect: { x: number; y: number; width: number; height: number };
+  containerElement: Element | null;
 };
 
 export const ModelessRnd = forwardRef<ModelessRndController, ModelessRndProps>(
-  ({ defaultZIndex, defaultPosition, containerRect, children, ...props }, ref) => {
+  ({ defaultZIndex, defaultPosition, containerRect, containerElement, children, ...props }, ref) => {
     const [zIndex, zIndexRef, setZIndex] = useRefState(defaultZIndex);
 
     const [isSnapToGrid, isSnapToGridRef, setIsSnapToGrid] = useRefState(false);
@@ -39,6 +43,8 @@ export const ModelessRnd = forwardRef<ModelessRndController, ModelessRndProps>(
       () => (isSnapToGrid ? snapGridSize : [1, 1]),
       [isSnapToGrid, snapGridSize],
     );
+
+    const [isDragging, setIsDragging] = useState(false);
 
     const [curentModelessPosition, setModelessPosition] = useState(defaultPosition);
     const [curentModelessSize, setModelessSize] = useState({ width: 640, height: 480 });
@@ -60,11 +66,27 @@ export const ModelessRnd = forwardRef<ModelessRndController, ModelessRndProps>(
       return [modelessPosition, modelessSize];
     }, [curentModelessPosition, curentModelessSize, containerRect]);
 
-    const handleMoveModeless = useCallback<RndDragCallback>((_e, position) => {
+    const handleStartMoveModeless = useCallback<RndDragCallback>((e, _position) => {
+      e.stopPropagation();
+      setIsDragging(true);
+    }, []);
+
+    const handleStopMoveModeless = useCallback<RndDragCallback>((e, position) => {
+      e.stopPropagation();
+      setIsDragging(false);
+
       setModelessPosition(position);
     }, []);
 
-    const handleResizeModeless = useCallback<RndResizeCallback>((_e, _direction, ref, _delta, position) => {
+    const handleStartResizeModeless = useCallback<RndResizeStartCallback>((e, _direction, _ref) => {
+      e.stopPropagation();
+      setIsDragging(true);
+    }, []);
+
+    const handleStopResizeModeless = useCallback<RndResizeCallback>((e, _direction, ref, _delta, position) => {
+      e.stopPropagation();
+      setIsDragging(false);
+
       setModelessSize({ width: ref.offsetWidth, height: ref.offsetHeight });
       setModelessPosition(position);
     }, []);
@@ -98,32 +120,42 @@ export const ModelessRnd = forwardRef<ModelessRndController, ModelessRndProps>(
     }, [isSnapToGrid, snapGridSize]);
 
     return (
-      <Rnd
-        onDragStop={handleMoveModeless}
-        onResize={handleResizeModeless}
-        position={modelessPosition}
-        size={modelessSize}
-        minWidth={240}
-        minHeight={320}
-        bounds={'parent'}
-        dragHandleClassName={'rnd-drag-handle'}
-        resizeHandleStyles={{
-          bottom: { cursor: 'ns-resize' },
-          bottomLeft: { cursor: 'nesw-resize' },
-          bottomRight: { cursor: 'nwse-resize' },
-          left: { cursor: 'ew-resize' },
-          right: { cursor: 'ew-resize' },
-          top: { cursor: 'ns-resize' },
-          topLeft: { cursor: 'nwse-resize' },
-          topRight: { cursor: 'nesw-resize' },
-        }}
-        dragGrid={snapGrid}
-        resizeGrid={snapGrid}
-        style={{ zIndex: zIndex }}
-        {...props}
-      >
-        {children}
-      </Rnd>
+      <>
+        {isDragging &&
+          containerElement &&
+          createPortal(
+            <Box position={'fixed'} top={'0px'} left={'0px'} right={'0px'} bottom={'0px'} />,
+            containerElement,
+          )}
+        <Rnd
+          onDragStart={handleStartMoveModeless}
+          onDragStop={handleStopMoveModeless}
+          onResizeStart={handleStartResizeModeless}
+          onResizeStop={handleStopResizeModeless}
+          position={modelessPosition}
+          size={modelessSize}
+          minWidth={240}
+          minHeight={320}
+          bounds={'parent'}
+          dragHandleClassName={'rnd-drag-handle'}
+          resizeHandleStyles={{
+            bottom: { cursor: 'ns-resize' },
+            bottomLeft: { cursor: 'nesw-resize' },
+            bottomRight: { cursor: 'nwse-resize' },
+            left: { cursor: 'ew-resize' },
+            right: { cursor: 'ew-resize' },
+            top: { cursor: 'ns-resize' },
+            topLeft: { cursor: 'nwse-resize' },
+            topRight: { cursor: 'nesw-resize' },
+          }}
+          dragGrid={snapGrid}
+          resizeGrid={snapGrid}
+          style={{ zIndex: zIndex }}
+          {...props}
+        >
+          {children}
+        </Rnd>
+      </>
     );
   },
 );

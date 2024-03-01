@@ -13,7 +13,7 @@ import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelData
 import { ChatDataBlock } from '@/lib/dataBlock/chatObject/chatDataBlock';
 import { ChatMessageDataBlock } from '@/lib/dataBlock/chatObject/chatMessageDataBlock';
 import { ChatMessageListDataBlock } from '@/lib/dataBlock/chatObject/chatMessageListDataBlock';
-import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/lib/hook/useDataBlock';
+import { useDataBlockList, useDataBlockTable, useDataBlockValue, useSetDataBlock } from '@/lib/hook/useDataBlock';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
 import { useSelectedChannelIdValueWithTabIndex, useSetSelectedChannelId } from '../useChatModelessTab';
@@ -29,11 +29,8 @@ export type ContentProps = FlexProps &
 
 export const Content: React.FC<ContentProps> = ({ contentId, chatDataBlockId }) => {
   const { set: setDataBlock } = useDataBlockTable();
-  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
-  const { set: setMessageList } = useDataBlock(
-    chat?.messageList ?? DataBlockId.none,
-    ChatMessageListDataBlock.partialIs,
-  );
+  const chat = useDataBlockValue(chatDataBlockId, ChatDataBlock.partialIs);
+  const setMessageList = useSetDataBlock(chat?.messageList ?? DataBlockId.none, ChatMessageListDataBlock.partialIs);
 
   const chatChannelIdList = useMemo(() => chat?.channelList ?? [], [chat]);
   const chatChannelIdListRef = useRef<string[]>([]);
@@ -44,7 +41,7 @@ export const Content: React.FC<ContentProps> = ({ contentId, chatDataBlockId }) 
   const { selectedChannelId, tabIndex } = useSelectedChannelIdValueWithTabIndex(contentId, chatChannelIdList);
   const { setSelectedChannelId } = useSetSelectedChannelId(contentId);
 
-  const { dataBlock: selectedChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.partialIs);
+  const selectedChannel = useDataBlockValue(selectedChannelId, ChatChannelDataBlock.partialIs);
 
   const [selectedTargetChannelIdSet, setSelectedTargetChannelIdSet] = useState(new Set<DataBlockId>());
 

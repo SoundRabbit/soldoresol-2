@@ -4,10 +4,11 @@ import { atomFamily, useRecoilValue, useSetRecoilState } from 'recoil';
 import { DataBlockId } from '@/lib/dataBlock';
 import { useTabIndex } from '@/lib/hook/useTabIndex';
 
-const RECOIL_KEY = 'component/_room/RoomView/modelessContent/chat/useChatModelessTab';
+const RECOIL_KEY = 'component/_room/RoomView/modelessContent/chat/useChatModelessTab:';
+const SELECTED_CHANNEL_ID_STATE_KEY = RECOIL_KEY + 'selectedChannelIdState';
 
 const selectedChannelIdState = atomFamily<DataBlockId, string>({
-  key: RECOIL_KEY + 'selectedChannelIdState',
+  key: SELECTED_CHANNEL_ID_STATE_KEY,
   default: DataBlockId.none,
 });
 

@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useCallback, useContext, useMemo } from 'react';
+import { produce } from 'immer';
+import React, { useCallback, useMemo } from 'react';
 
 import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
 
 import { Button } from '@/component/Button';
-import { RoomContext } from '@/component/context/RoomContext';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { GameDataBlock } from '@/lib/dataBlock/gameObject/gameDataBlock';
 import { SceneDataBlock } from '@/lib/dataBlock/gameObject/sceneDataBlock';
 import { TableDataBlock } from '@/lib/dataBlock/gameObject/tableDataBlock';
 import { WorkboardDataBlock } from '@/lib/dataBlock/tableObject/workboardDataBlock';
-import { useDataBlock, useDataBlockTable } from '@/lib/hook/useDataBlock';
+import { useDataBlockState, useDataBlockTable } from '@/lib/hook/useDataBlock';
+import { useRoomRendererValue } from '@/lib/hook/useRoomState';
 import { TableRendererChannel } from '@/lib/tableRenderer';
 import { NonChildren } from '@/lib/type/utilityTypes';
 
@@ -24,8 +25,8 @@ export type SceneTabPanelProps = NonChildren<TabPanelProps> & {
 
 export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, ...props }) => {
   const { set: setDataBlock } = useDataBlockTable();
-  const { dataBlock: game, set: setGame } = useDataBlock(gameDataBlockId, GameDataBlock.partialIs);
-  const roomContext = useContext(RoomContext);
+  const { dataBlock: game, set: setGame } = useDataBlockState(gameDataBlockId, GameDataBlock.partialIs);
+  const roomRenderer = useRoomRendererValue();
 
   const handleAddScene = useCallback(async () => {
     const workboard = WorkboardDataBlock.create({ name: '新しい盤面', size: [10, 10] });
@@ -41,15 +42,16 @@ export const SceneTabPanel: React.FC<SceneTabPanelProps> = ({ gameDataBlockId, .
     const sceneId = await setDataBlock(scene);
     if (sceneId === undefined) return;
 
-    setGame(async (game) => {
-      const sceneList = [...game.sceneList, sceneId];
-      return { ...game, sceneList };
-    });
+    setGame(async (game) =>
+      produce(game, (draft) => {
+        draft.sceneList.push(sceneId);
+      }),
+    );
 
-    if (roomContext) {
-      TableRendererChannel.setTableDataBlockId(roomContext.renderer, mainTableId);
+    if (roomRenderer) {
+      TableRendererChannel.setTableDataBlockId(roomRenderer, mainTableId);
     }
-  }, [setDataBlock, setGame, roomContext]);
+  }, [setDataBlock, setGame, roomRenderer]);
   const sceneIdList = useMemo(() => game?.sceneList ?? [], [game]);
 
   return (

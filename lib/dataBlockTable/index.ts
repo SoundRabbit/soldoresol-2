@@ -19,6 +19,11 @@ export type DataBlockTableChannel = {
 };
 
 export const DataBlockTableChannel = {
+  $default: {
+    worker: undefined,
+    port: undefined,
+  },
+
   create(port?: MessagePort): DataBlockTableChannel {
     const worker = (() => {
       if (typeof SharedWorker !== 'undefined' && !port) {

@@ -20,6 +20,7 @@ type ModelessListItem = {
   modelessId: string;
   defaultZIndex: number;
   defaultPosition: { x: number; y: number };
+  defaultContentList: ModelessContent[];
 };
 
 type ModelessList = (ModelessListItem | null)[];
@@ -58,7 +59,6 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
     }, []);
 
     const [modelessList, setModelessList] = useState<ModelessList>([]);
-    const [reservedContentList, setReservedContentList] = useState<[string, ModelessContent[]][]>([]);
 
     const modelessControllerRef = useRef<ModelessController>({});
 
@@ -88,10 +88,14 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
           const position = option?.defaultPosition || { x: 160, y: 160 };
           position.x += (newZIndex % 10) * 20;
           position.y += (newZIndex % 10) * 20;
-          newModelessList.push({ modelessId: newModelessId, defaultZIndex: newZIndex, defaultPosition: position });
+          newModelessList.push({
+            modelessId: newModelessId,
+            defaultZIndex: newZIndex,
+            defaultPosition: position,
+            defaultContentList: contentList,
+          });
           return newModelessList;
         });
-        setReservedContentList((reservedContentList) => [...reservedContentList, [newModelessId, contentList]]);
       },
       [],
     );
@@ -177,22 +181,6 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
       };
     }, [setContainerRect]);
 
-    useEffect(() => {
-      if (reservedContentList.length === 0) return;
-      const newResevredContentList: [string, ModelessContent[]][] = [];
-      const len = reservedContentList.length;
-      for (let i = 0; i < len; i++) {
-        const [modelessId, tabList] = reservedContentList[i];
-        const modelessController = modelessControllerRef.current[modelessId];
-        if (modelessController) {
-          modelessController.pushTabList(tabList);
-        } else {
-          newResevredContentList.push([modelessId, tabList]);
-        }
-      }
-      setReservedContentList(newResevredContentList);
-    }, [reservedContentList]);
-
     useImperativeHandle(ref, () => ({
       openModeless: (tabList, option) => {
         handleOpenMoodeless(tabList, option);
@@ -212,7 +200,7 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
       >
         {modelessList.map((maybeModelessId, index) => {
           if (!maybeModelessId) return <Box key={`empty-${index}`} />;
-          const { modelessId, defaultPosition, defaultZIndex } = maybeModelessId;
+          const { modelessId, defaultPosition, defaultZIndex, defaultContentList } = maybeModelessId;
 
           return (
             <Modeless
@@ -223,8 +211,10 @@ export const ModelessContainer = forwardRef<ModelessContainerController, Modeles
               onFocusModeless={handleFocusModeless}
               onCloseModeless={handleCloseModeless}
               containerRect={containerRect}
+              containerElement={containerRef.current}
               defaultPosition={defaultPosition}
               defaultZIndex={defaultZIndex}
+              defaultContentList={defaultContentList}
             />
           );
         })}

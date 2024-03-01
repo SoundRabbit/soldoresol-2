@@ -6,7 +6,7 @@ import { ToggleButton, ToggleButtonProps } from '@/component/ToggleButton';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
-import { useDataBlock } from '@/lib/hook/useDataBlock';
+import { useDataBlockValue } from '@/lib/hook/useDataBlock';
 
 export type MessageTargetToggleButtonProps = Omit<ToggleButtonProps, 'onToggle'> & {
   chatChannelDataBlockId: DataBlockId;
@@ -18,7 +18,7 @@ export const MessageTargetToggleButton: React.FC<MessageTargetToggleButtonProps>
   onToggle,
   ...props
 }) => {
-  const { dataBlock: chatChannel } = useDataBlock(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
+  const chatChannel = useDataBlockValue(chatChannelDataBlockId, ChatChannelDataBlock.partialIs);
 
   const handleToggleTarget = useCallback(
     (isToggled: boolean) => {

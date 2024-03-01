@@ -23,7 +23,7 @@ import { Textarea } from '@/component/Textarea';
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/lib/dataBlock/chatObject/chatDataBlock';
-import { useDataBlock, useDataBlockTable } from '@/lib/hook/useDataBlock';
+import { useDataBlockState, useDataBlockTable, useSetDataBlock } from '@/lib/hook/useDataBlock';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
 type InputableElement = HTMLInputElement | HTMLTextAreaElement;
@@ -39,8 +39,8 @@ export const ChannelEditorTabPanel: React.FC<ChannelEditorTabPanelProps> = ({
   ...props
 }) => {
   const { remove: removeDataBlock } = useDataBlockTable();
-  const { set: setChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
-  const { dataBlock: chatChannel, set: setChatChannel } = useDataBlock(
+  const setChat = useSetDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
+  const { dataBlock: chatChannel, set: setChatChannel } = useDataBlockState(
     chatChannelDataBlockId,
     ChatChannelDataBlock.partialIs,
   );

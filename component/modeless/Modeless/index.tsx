@@ -54,7 +54,9 @@ export type ModelessProps = FlexProps & {
   modelessId: string;
   defaultPosition: { x: number; y: number };
   defaultZIndex: number;
+  defaultContentList: ModelessContent[];
   containerRect: ModelessRndProps['containerRect'];
+  containerElement: Element | null;
   onMoveTab: OnMoveTab;
   onFocusModeless: (modelessId: string) => void;
   onCloseModeless: (modelessId: string) => void;
@@ -67,6 +69,8 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
       defaultPosition,
       defaultZIndex,
       containerRect,
+      containerElement,
+      defaultContentList,
       onMoveTab,
       onFocusModeless,
       onCloseModeless,
@@ -79,9 +83,11 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
 
     const [isSnapToGrid, setIsSnapToGrid] = useState<boolean>(false);
 
-    const [contentList, contentListRef, setContentList] = useRefState<ModelessContent[]>([]);
+    const [contentList, contentListRef, setContentList] = useRefState<ModelessContent[]>(defaultContentList);
 
-    const [selectedContentId, selectedContentIdRef, setSelectedContentId] = useRefState<string>('');
+    const [selectedContentId, selectedContentIdRef, setSelectedContentId] = useRefState<string>(
+      defaultContentList.at(0)?.contentId ?? '',
+    );
     const selectedContent = useMemo(
       () => contentList.find((content) => content.contentId === selectedContentId),
       [contentList, selectedContentId],
@@ -236,6 +242,7 @@ export const Modeless = forwardRef<ModelessController, ModelessProps>(
         defaultZIndex={defaultZIndex}
         defaultPosition={defaultPosition}
         containerRect={containerRect}
+        containerElement={containerElement}
       >
         <Flex
           onMouseDownCapture={handleFocusSelf}

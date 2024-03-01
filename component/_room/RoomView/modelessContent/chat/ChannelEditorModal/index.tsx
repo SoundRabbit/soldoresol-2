@@ -22,7 +22,7 @@ import { SortableContext } from '@dnd-kit/sortable';
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/lib/dataBlock/chatObject/chatDataBlock';
-import { useDataBlock, useDataBlockList, useDataBlockTable } from '@/lib/hook/useDataBlock';
+import { useDataBlockList, useDataBlockState, useDataBlockTable } from '@/lib/hook/useDataBlock';
 import { useTabIndex } from '@/lib/hook/useTabIndex';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
@@ -41,7 +41,7 @@ export const ChannelEditorModal: React.FC<ChannelEditorModalProps> = ({
   ...props
 }) => {
   const { set: setDataBlock } = useDataBlockTable();
-  const { dataBlock: chat, set: setChat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
+  const { dataBlock: chat, set: setChat } = useDataBlockState(chatDataBlockId, ChatDataBlock.partialIs);
   const chatChannelIdList = useMemo(() => chat?.channelList ?? [], [chat]);
   const chatChannelIdListRef = useRef<string[]>([]);
   chatChannelIdListRef.current = chatChannelIdList;

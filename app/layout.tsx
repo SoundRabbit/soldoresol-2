@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 
 import { Box } from '@chakra-ui/react';
 
+import { LayoutProvider } from './LayoutProvider';
 import { fonts } from './fonts';
-import { Providers } from './providers';
 import './style.css';
 
 export const metadata: Metadata = {
@@ -18,11 +18,11 @@ const RootLayout = ({
   return (
     <html lang='ja' className={fonts.notoSnasJp.variable}>
       <body>
-        <Providers>
+        <LayoutProvider>
           <Box width={'100vw'} height={'100vh'} overflow={'hidden'}>
             {children}
           </Box>
-        </Providers>
+        </LayoutProvider>
       </body>
     </html>
   );

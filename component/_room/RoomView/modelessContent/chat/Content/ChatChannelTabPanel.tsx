@@ -6,7 +6,7 @@ import { Stack, TabPanel, TabPanelProps } from '@chakra-ui/react';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatMessageListDataBlock } from '@/lib/dataBlock/chatObject/chatMessageListDataBlock';
-import { useDataBlock } from '@/lib/hook/useDataBlock';
+import { useDataBlockValue } from '@/lib/hook/useDataBlock';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
 import { ChatChannelTabPanelDescription } from './ChatChannelTabPanelDescription';
@@ -21,7 +21,7 @@ export const ChatChannelTabPanel: React.FC<ChatChannelTabPanelProps> = ({
   chatChannelDataBlocklId,
   ...props
 }) => {
-  const { dataBlock: chatMessageList } = useDataBlock(chatMessageListDataBlockId, ChatMessageListDataBlock.partialIs);
+  const chatMessageList = useDataBlockValue(chatMessageListDataBlockId, ChatMessageListDataBlock.partialIs);
   const descriptionParentRef = useRef<HTMLDivElement>(null);
 
   return (

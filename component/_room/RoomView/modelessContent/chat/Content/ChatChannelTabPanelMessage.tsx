@@ -6,7 +6,7 @@ import { ChatMessage } from '@/component/ChatMessage';
 
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatMessageDataBlock } from '@/lib/dataBlock/chatObject/chatMessageDataBlock';
-import { useDataBlock } from '@/lib/hook/useDataBlock';
+import { useDataBlockValue } from '@/lib/hook/useDataBlock';
 
 export type ChatChannelTabPanelMessageProps = {
   chatMessageDataBlocklId: DataBlockId;
@@ -17,7 +17,7 @@ export const ChatChannelTabPanelMessage: React.FC<ChatChannelTabPanelMessageProp
   chatMessageDataBlocklId,
   chatChannelDataBlocklId,
 }) => {
-  const { dataBlock: chatMessage } = useDataBlock(chatMessageDataBlocklId, ChatMessageDataBlock.partialIs);
+  const chatMessage = useDataBlockValue(chatMessageDataBlocklId, ChatMessageDataBlock.partialIs);
 
   if (chatMessage?.filterChannelList.includes(chatChannelDataBlocklId)) {
     return <ChatMessage chatMessageDataBlockId={chatMessage.id} />;

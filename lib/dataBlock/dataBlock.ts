@@ -23,13 +23,20 @@ export type DataBlock = {
   dataBlockType: DataBlockType;
 };
 
-const tDataBlock = t.type({
+const $DataBlock = t.type({
   id: t.string,
   dataBlockType: t.string,
 });
 
 export const DataBlock = {
   is(value: unknown): value is DataBlock {
-    return tDataBlock.is(value);
+    return $DataBlock.is(value);
+  },
+
+  none(): DataBlock {
+    return {
+      id: DataBlockId.none,
+      dataBlockType: 'none',
+    };
   },
 };

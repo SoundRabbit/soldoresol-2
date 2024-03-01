@@ -5,7 +5,6 @@ import { DataBlockId } from '@/lib/dataBlock';
 import { DataBlockTableChannel } from '@/lib/dataBlockTable';
 import { Maybe } from '@/lib/type/utilityTypes';
 
-import { Renderer } from './renderer';
 import {
   GetIntersect,
   GetIntersectResponse,
@@ -19,10 +18,13 @@ import {
 
 export type TableRendererChannel = {
   worker: Maybe<Worker>;
-  renderer: Maybe<Renderer>;
 };
 
 export const TableRendererChannel = {
+  $default: {
+    worker: undefined,
+  },
+
   create(): TableRendererChannel {
     const worker = (() => {
       if (typeof Worker !== 'undefined') {
@@ -37,7 +39,6 @@ export const TableRendererChannel = {
 
     return {
       worker,
-      renderer: undefined,
     };
   },
 

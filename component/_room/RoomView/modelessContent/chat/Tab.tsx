@@ -10,7 +10,7 @@ import { ModelessTab, ModelessTabProps } from '@/component/modeless/ModelessTab'
 import { DataBlockId } from '@/lib/dataBlock';
 import { ChatChannelDataBlock } from '@/lib/dataBlock/chatObject/chatChannelDataBlock';
 import { ChatDataBlock } from '@/lib/dataBlock/chatObject/chatDataBlock';
-import { useDataBlock } from '@/lib/hook/useDataBlock';
+import { useDataBlockValue } from '@/lib/hook/useDataBlock';
 
 import { useSelectedChannelIdValue } from './useChatModelessTab';
 
@@ -19,9 +19,9 @@ export type TabProps = ModelessTabProps & {
 };
 
 export const Tab: React.FC<TabProps> = ({ contentId, chatDataBlockId, ...modelessTabProps }) => {
-  const { dataBlock: chat } = useDataBlock(chatDataBlockId, ChatDataBlock.partialIs);
+  const chat = useDataBlockValue(chatDataBlockId, ChatDataBlock.partialIs);
   const { selectedChannelId } = useSelectedChannelIdValue(contentId, chat?.channelList ?? []);
-  const { dataBlock: selectedChatChannel } = useDataBlock(selectedChannelId, ChatChannelDataBlock.partialIs);
+  const selectedChatChannel = useDataBlockValue(selectedChannelId, ChatChannelDataBlock.partialIs);
 
   return (
     <ModelessTab contentId={contentId} {...modelessTabProps}>

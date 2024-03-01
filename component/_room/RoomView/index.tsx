@@ -1,37 +1,38 @@
 'use client';
 
-import React, { useContext } from 'react';
+import React, { useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { Box, Button, Flex, FlexProps, Grid, Stack, Text, chakra } from '@chakra-ui/react';
+import { Box, Button, FlexProps, Grid, Stack, Text, chakra } from '@chakra-ui/react';
 
 import { Input } from '@/component/Input';
 import { KeyValue } from '@/component/KeyValue';
 import { SidePanel } from '@/component/SidePanel';
-import { RoomContext } from '@/component/context/RoomContext';
 import { ModelessContainer } from '@/component/modeless/ModelessContainer';
 
-import { DataBlockId } from '@/lib/dataBlock';
+import { useRoomIdValue } from '@/lib/hook/useRoomState';
 import { bgColor, txColor } from '@/lib/util/openColor';
 
 import { BasicUsage } from './BasicUsage';
+import { RoomViewWrapper } from './RoomViewWrapper';
 import { SidePanelContent } from './SidePanelContent';
 import { useCanvas } from './useCanvas';
 import { useRoom } from './useRoom';
 
 const Canvas = chakra('canvas');
 
-export type RoomViewProps = Omit<FlexProps, 'children'> & {
-  gameDataBlockId: DataBlockId;
-  chatDataBlockId: DataBlockId;
-};
+export type RoomViewProps = Omit<FlexProps, 'children'> & {};
 
-export const RoomView: React.FC<RoomViewProps> = ({ gameDataBlockId, chatDataBlockId, ...props }) => {
+export const RoomView: React.FC<RoomViewProps> = ({ ...props }) => {
+  const roomId = useRoomIdValue();
+  const gameDataBlockId = useMemo(() => uuidv4(), []);
+  const chatDataBlockId = useMemo(() => uuidv4(), []);
+
   const { openChatModeless, modelessContainerControllerRef } = useRoom(gameDataBlockId, chatDataBlockId);
-  const roomContext = useContext(RoomContext);
   const { handleCanvasRef, handleMouseEvent } = useCanvas();
 
   return (
-    <Flex direction={'column'} width={'100%'} height={'100%'} {...props}>
+    <RoomViewWrapper direction={'column'} width={'100%'} height={'100%'} {...props}>
       <Grid
         gridTemplateColumns={'1fr 1fr'}
         gridTemplateRows={'max-content max-content'}
@@ -42,7 +43,7 @@ export const RoomView: React.FC<RoomViewProps> = ({ gameDataBlockId, chatDataBlo
       >
         <KeyValue>
           <Text>ルームID</Text>
-          <Input isReadOnly={true} value={roomContext?.roomId ?? ''} />
+          <Input isReadOnly={true} value={roomId ?? ''} />
         </KeyValue>
         <Box />
         <Stack direction='row'>
@@ -73,6 +74,6 @@ export const RoomView: React.FC<RoomViewProps> = ({ gameDataBlockId, chatDataBlo
           }}
         </SidePanel>
       </Box>
-    </Flex>
+    </RoomViewWrapper>
   );
 };
