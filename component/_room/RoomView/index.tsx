@@ -57,6 +57,9 @@ export const RoomView: React.FC<RoomViewProps> = ({ ...props }) => {
           onMouseMove={handleMouseEvent}
           onMouseUp={handleMouseEvent}
           onMouseDown={handleMouseEvent}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           position={'absolute'}
           width={'100%'}
           height={'100%'}

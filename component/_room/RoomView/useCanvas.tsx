@@ -134,7 +134,7 @@ export const useCanvas = () => {
             currentEventTarget === null ||
             eventTarget === null ||
             currentEventTarget !== eventTarget ||
-            (e.buttons & 1) === 0
+            (e.buttons & (1 | 2)) === 0
           ) {
             if (isCanvasDragging) set(canvasDraggingState, false);
             mouseRef.current.dragging = undefined;
@@ -186,20 +186,34 @@ export const useCanvas = () => {
             return;
           }
 
-          const { vpMxInv, intersectPosition } = mouseRef.current.dragging;
-          const currentScreenPosition = mouseRef.current.dragging.screenPosition.clone();
-          currentScreenPosition.setX(currentPosition[0] * currentScreenPosition.w);
-          currentScreenPosition.setY(currentPosition[1] * currentScreenPosition.w);
-          const currentWorldPosition = currentScreenPosition.clone().applyMatrix4(vpMxInv);
+          if ((e.buttons & 1) !== 0) {
+            const { vpMxInv, intersectPosition } = mouseRef.current.dragging;
+            const currentScreenPosition = mouseRef.current.dragging.screenPosition.clone();
+            currentScreenPosition.setX(currentPosition[0] * currentScreenPosition.w);
+            currentScreenPosition.setY(currentPosition[1] * currentScreenPosition.w);
+            const currentWorldPosition = currentScreenPosition.clone().applyMatrix4(vpMxInv);
 
-          const deltaX = currentWorldPosition.x - intersectPosition.x;
-          const deltaY = currentWorldPosition.y - intersectPosition.y;
-          const deltaZ = currentWorldPosition.z - intersectPosition.z;
+            const deltaX = currentWorldPosition.x - intersectPosition.x;
+            const deltaY = currentWorldPosition.y - intersectPosition.y;
+            const deltaZ = currentWorldPosition.z - intersectPosition.z;
 
-          mouseRef.current.dragging.intersectPosition = currentWorldPosition;
-          mouseRef.current.dragging.screenPosition = currentScreenPosition;
+            mouseRef.current.dragging.intersectPosition = currentWorldPosition;
+            mouseRef.current.dragging.screenPosition = currentScreenPosition;
 
-          Camera.moveWorld(cameraRef.current, deltaX, deltaY, deltaZ);
+            Camera.moveWorld(cameraRef.current, deltaX, deltaY, deltaZ);
+          }
+
+          if ((e.buttons & 2) !== 0) {
+            const deltaX = currentPosition[0] - prevPosition[0];
+            const deltaY = currentPosition[1] - prevPosition[1];
+
+            const rotMX = ((deltaX * Math.PI) / 180) * 90;
+            const rotMY = ((deltaY * Math.PI) / 180) * 90;
+
+            Camera.rotateWorldByCameraAxis(cameraRef.current, -rotMY, 0, 0);
+            Camera.rotateWorld(cameraRef.current, 0, 0, rotMX);
+          }
+
           const cameraPosition = Camera.getPosition(cameraRef.current);
           const cameraRotation = Camera.getRotation(cameraRef.current, 'XYZ');
           TableRendererChannel.setCameraPosition(roomRenderer, {

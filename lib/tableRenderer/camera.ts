@@ -30,6 +30,24 @@ export const Camera = {
     camera.basis.premultiply(invRotate);
   },
 
+  rotateWorldByCameraAxis(camera: Camera, x: number, y: number, z: number): void {
+    const xAxis = new THREE.Vector3();
+    const yAxis = new THREE.Vector3();
+    const zAxis = new THREE.Vector3();
+    camera.basis.extractBasis(xAxis, yAxis, zAxis);
+
+    const invRotate = new THREE.Matrix4();
+
+    invRotate.makeRotationAxis(xAxis, -x);
+    camera.basis.premultiply(invRotate);
+
+    invRotate.makeRotationAxis(yAxis, -y);
+    camera.basis.premultiply(invRotate);
+
+    invRotate.makeRotationAxis(zAxis, -z);
+    camera.basis.premultiply(invRotate);
+  },
+
   moveCamera(camera: Camera, x: number, y: number, z: number): void {
     const position = new THREE.Vector3(x, y, z).applyMatrix4(camera.basis);
     camera.basis.setPosition(position);
@@ -37,8 +55,12 @@ export const Camera = {
 
   rotateCamera(camera: Camera, x: number, y: number, z: number): void {
     const position = new THREE.Vector3().setFromMatrixPosition(camera.basis);
-    const rotate = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x, y, z, 'ZYX'));
-    camera.basis.premultiply(rotate);
+    const currentRotation = new THREE.Euler();
+    currentRotation.setFromRotationMatrix(camera.basis, 'ZYX');
+    currentRotation.x += x;
+    currentRotation.y += y;
+    currentRotation.z += z;
+    camera.basis.makeRotationFromEuler(currentRotation);
     camera.basis.setPosition(position);
   },
 
